@@ -296,36 +296,55 @@ html, body {
 /* ==========================================================================
    Layout Architecture
    ========================================================================== */
+/* ==========================================================================
+   Layout Architecture: Demo Area AT THE TOP, Controls Grid Below
+   ========================================================================== */
 .app-layout {
-  display: grid;
-  grid-template-columns: 360px 1fr;
-  height: calc(100vh - 65px);
-  overflow: hidden;
-}
-
-@media (max-width: 1024px) {
-  .app-layout {
-    grid-template-columns: 1fr;
-    height: auto;
-    overflow-y: auto;
-  }
-}
-
-.sidebar-controls {
-  background-color: var(--bg-secondary);
-  border-right: 1px solid var(--border-color);
-  padding: 18px 20px;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  min-height: calc(100vh - 65px);
+  background-color: var(--bg-primary);
 }
 
-@media (max-width: 1024px) {
-  .sidebar-controls {
-    border-right: none;
-    border-top: 1px solid var(--border-color);
+/* 1. DEMO AREA (Top of page) */
+.demo-area-top {
+  width: 100%;
+  background-color: var(--bg-primary);
+  border-bottom: 2px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. CONTROLS PANEL (Below the Demo Area) */
+.controls-panel-bottom {
+  width: 100%;
+  background-color: var(--bg-secondary);
+  padding: 20px 20px 48px 20px;
+}
+
+.controls-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .controls-grid {
+    grid-template-columns: 1fr;
   }
+}
+
+.control-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: var(--shadow-sm);
 }
 
 .panel-section {

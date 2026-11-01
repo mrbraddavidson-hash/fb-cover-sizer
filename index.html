@@ -65,296 +65,12 @@
     </div>
   </header>
 
-  <!-- CLEAN TWO-COLUMN STUDIO LAYOUT: SIDEBAR ON LEFT, CANVAS ON RIGHT -->
   <main class="app-layout">
-    <!-- LEFT SIDEBAR: ALL CONTROLS (Uploads, Sizing, Guides, Download) -->
-    <aside class="sidebar-controls" aria-label="Controls and adjustments">
-      
-      <!-- 1. Upload & AI Image Generation Section -->
-      <section class="panel-section">
-        <h2 class="section-title">
-          <span class="step-num">1</span> Image Source
-        </h2>
-
-        <!-- Mode Selector: Upload or AI Generate -->
-        <div class="source-mode-toggle" role="tablist">
-          <button type="button" id="sourceUploadTab" class="source-mode-btn active" role="tab" aria-selected="true">
-            📁 Upload File
-          </button>
-          <button type="button" id="sourceAiTab" class="source-mode-btn" role="tab" aria-selected="false">
-            ✨ AI Generator
-          </button>
-        </div>
-        
-        <!-- Upload Pane -->
-        <div id="uploadPane" class="source-pane active">
-          <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Upload photo: drag and drop or click">
-            <input type="file" id="fileInput" accept="image/*" class="file-input-hidden" aria-label="Choose image file">
-            <div class="drop-zone-content">
-              <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
-                <path d="M12 12v9"></path>
-                <path d="m8 16 4-4 4 4"></path>
-              </svg>
-              <p class="drop-prompt"><strong>Click to upload</strong> or drag & drop</p>
-              <p class="drop-hint">PNG, JPG, WebP, or paste (Ctrl+V)</p>
-            </div>
-          </div>
-
-          <div class="sample-picker">
-            <span class="sample-label">Or try a preset sample:</span>
-            <div class="sample-buttons">
-              <button type="button" class="btn-chip" data-sample="business">🏢 Business</button>
-              <button type="button" class="btn-chip" data-sample="nature">🌄 Nature</button>
-              <button type="button" class="btn-chip" data-sample="creative">🎨 Creative</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- AI Image Generator Pane -->
-        <div id="aiGenPane" class="source-pane hidden">
-          <div class="ai-generator-box">
-            <label for="aiPromptInput" class="ai-label">Describe your cover image:</label>
-            <textarea id="aiPromptInput" class="ai-prompt-textarea" rows="3" placeholder="e.g. Modern tech startup office with glass walls, neon ambient lighting, cinematic photography"></textarea>
-            
-            <div class="ai-style-selector">
-              <span class="style-label">Style:</span>
-              <div class="style-chips">
-                <button type="button" class="style-chip active" data-style="photorealistic">Photorealistic</button>
-                <button type="button" class="style-chip" data-style="digital art">Digital Art</button>
-                <button type="button" class="style-chip" data-style="3d render">3D Render</button>
-                <button type="button" class="style-chip" data-style="minimalist">Minimalist</button>
-                <button type="button" class="style-chip" data-style="cyberpunk">Cyberpunk</button>
-                <button type="button" class="style-chip" data-style="watercolor">Watercolor</button>
-              </div>
-            </div>
-
-            <div class="ai-ideas-row">
-              <span class="ideas-label">Quick Ideas:</span>
-              <div class="ideas-scroll">
-                <button type="button" class="btn-idea" data-idea="Luxury modern villa pool at golden hour, architectural digest photography, widescreen">🏡 Luxury Villa</button>
-                <button type="button" class="btn-idea" data-idea="Cozy artisanal coffee shop interior with warm bokeh and wood accents, soft sunlight">☕ Cafe & Bakery</button>
-                <button type="button" class="btn-idea" data-idea="Futuristic neon synthwave gaming setup with multi-monitor glow, 8k wallpaper">🎮 Gaming / Neon</button>
-                <button type="button" class="btn-idea" data-idea="Epic misty alpine mountain peak reflection in crystal blue lake, panoramic landscape">🏔️ Nature Lake</button>
-                <button type="button" class="btn-idea" data-idea="Modern corporate business team brainstorming in sleek glass boardroom, bright lighting">💼 Corporate</button>
-              </div>
-            </div>
-
-            <button type="button" id="generateAiBtn" class="btn btn-primary btn-block ai-gen-btn">
-              <span class="ai-btn-icon">⚡</span>
-              <span class="ai-btn-text">Generate AI Cover Image</span>
-              <div id="aiLoadingSpinner" class="spinner hidden"></div>
-            </button>
-            <p id="aiStatusText" class="ai-status-text">Free unlimited generation • No API key required</p>
-          </div>
-        </div>
-      </section>
-
-      <!-- 2. Sizing & Transform Controls -->
-      <section class="panel-section">
-        <h2 class="section-title">
-          <span class="step-num">2</span> Sizing & Alignment
-        </h2>
-
-        <!-- Fit Modes (Contain, Cover, Safe Zone) -->
-        <div class="fit-mode-selector">
-          <label class="control-label-row">
-            <span>Sizing Presets</span>
-            <span id="imageAspectBadge" class="value-badge">Auto Fit</span>
-          </label>
-          <div class="fit-buttons-grid">
-            <button type="button" id="fitContainBtn" class="btn btn-sm btn-fit active" title="Show entire photo without any edges cut off">
-              🖼️ Fit Whole Photo (No Cutoff)
-            </button>
-            <button type="button" id="fitCoverBtn" class="btn btn-sm btn-fit" title="Expand to fill entire 1640×720 canvas">
-              📐 Fill Full Canvas
-            </button>
-            <button type="button" id="fitSafeBtn" class="btn btn-sm btn-fit" title="Fit neatly inside PC & Mobile safe area">
-              🎯 Fit Inside Safe Zone
-            </button>
-          </div>
-        </div>
-
-        <!-- Position Alignment (Top, Center, Bottom) -->
-        <div class="control-group">
-          <label class="control-label-row">
-            <span>Vertical & Horizontal Alignment</span>
-          </label>
-          <div class="align-buttons-row">
-            <button type="button" id="alignTopBtn" class="btn btn-sm btn-align" title="Align photo to top edge">
-              ⬆ Top
-            </button>
-            <button type="button" id="centerImageBtn" class="btn btn-sm btn-align" title="Re-center image">
-              ⊙ Center
-            </button>
-            <button type="button" id="alignBottomBtn" class="btn btn-sm btn-align" title="Align photo to bottom edge">
-              ⬇ Bottom
-            </button>
-          </div>
-        </div>
-
-        <!-- Zoom Slider -->
-        <div class="control-group">
-          <div class="control-label-row">
-            <label for="zoomSlider">Zoom Scale</label>
-            <span id="zoomVal" class="value-badge">100%</span>
-          </div>
-          <div class="slider-with-buttons">
-            <button type="button" id="zoomOutBtn" class="btn-mini" title="Zoom out" aria-label="Zoom out">−</button>
-            <input type="range" id="zoomSlider" min="30" max="300" value="100" step="1">
-            <button type="button" id="zoomInBtn" class="btn-mini" title="Zoom in" aria-label="Zoom in">+</button>
-          </div>
-        </div>
-
-        <!-- Secondary Transformations -->
-        <div class="quick-transforms secondary">
-          <button type="button" id="rotateLeftBtn" class="btn btn-sm" title="Rotate left 90°">⤺ 90°</button>
-          <button type="button" id="rotateRightBtn" class="btn btn-sm" title="Rotate right 90°">⤻ 90°</button>
-          <button type="button" id="flipHBtn" class="btn btn-sm" title="Flip horizontally">Flip ⇄</button>
-          <button type="button" id="flipVBtn" class="btn btn-sm" title="Flip vertically">Flip ⇅</button>
-        </div>
-
-        <!-- Background Fill if photo doesn't fill canvas -->
-        <div class="control-group">
-          <div class="control-label-row">
-            <label for="bgTypeSelect">Background Fill (For Margins)</label>
-          </div>
-          <select id="bgTypeSelect" class="form-select">
-            <option value="blur" selected>✨ Blurred Image (Smart Fill)</option>
-            <option value="color">🎨 Solid Color</option>
-            <option value="gradient">🌈 Subtle Dark Gradient</option>
-            <option value="transparent">⬜ Transparent (PNG)</option>
-          </select>
-        </div>
-
-        <div id="bgColorRow" class="control-group hidden">
-          <div class="control-label-row">
-            <label for="bgColorPicker">Fill Color</label>
-            <div class="color-picker-wrapper">
-              <input type="color" id="bgColorPicker" value="#1877F2">
-              <span id="bgColorHex" class="value-badge">#1877F2</span>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 3. Safe Zone Guides & Overlays -->
-      <section class="panel-section">
-        <h2 class="section-title">
-          <span class="step-num">3</span> Safe Zone Guides
-        </h2>
-
-        <div class="switches-list">
-          <label class="switch-row">
-            <input type="checkbox" id="showSafeZoneCheck" checked>
-            <div class="switch-ui"></div>
-            <div class="switch-text">
-              <span class="switch-label safe-label">Universal Safe Zone</span>
-              <span class="switch-desc">Visible on BOTH PC & Mobile (1280 × 624 px)</span>
-            </div>
-          </label>
-
-          <label class="switch-row">
-            <input type="checkbox" id="showDesktopCropCheck" checked>
-            <div class="switch-ui"></div>
-            <div class="switch-text">
-              <span class="switch-label desktop-label">Desktop PC Cutoff</span>
-              <span class="switch-desc">Top & bottom cropped on computers (-48px each)</span>
-            </div>
-          </label>
-
-          <label class="switch-row">
-            <input type="checkbox" id="showMobileCropCheck" checked>
-            <div class="switch-ui"></div>
-            <div class="switch-text">
-              <span class="switch-label mobile-label">Mobile Smartphone Cutoff</span>
-              <span class="switch-desc">Left & right cropped on phones (-180px each)</span>
-            </div>
-          </label>
-
-          <label class="switch-row">
-            <input type="checkbox" id="showThirdsCheck">
-            <div class="switch-ui"></div>
-            <div class="switch-text">
-              <span class="switch-label">Rule of Thirds Grid</span>
-              <span class="switch-desc">Harmonious alignment lines</span>
-            </div>
-          </label>
-        </div>
-
-        <!-- Avatar silhouette -->
-        <div class="control-group">
-          <label for="avatarModeSelect">Avatar / Profile Picture Overlay</label>
-          <select id="avatarModeSelect" class="form-select">
-            <option value="none" selected>🚫 Clean View (No Profile Overlays)</option>
-            <option value="both">👤 Show Desktop & Mobile Avatar Positions</option>
-            <option value="personal">👤 Desktop Left Avatar Only</option>
-            <option value="page">🏢 Mobile Center Avatar Only</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <div class="control-label-row">
-            <label for="overlayOpacitySlider">Guide Opacity</label>
-            <span id="overlayOpacityVal" class="value-badge">65%</span>
-          </div>
-          <input type="range" id="overlayOpacitySlider" min="15" max="100" value="65" step="5">
-        </div>
-      </section>
-
-      <!-- 4. Export & Download -->
-      <section class="panel-section">
-        <h2 class="section-title">
-          <span class="step-num">4</span> Download
-        </h2>
-
-        <div class="control-group">
-          <label for="resolutionSelect">Output Dimensions</label>
-          <select id="resolutionSelect" class="form-select">
-            <option value="2x" selected>1640 × 720 px — High-Res 2x (Recommended)</option>
-            <option value="1x">820 × 360 px — Standard 1x</option>
-            <option value="desktop">1640 × 624 px — Exact Desktop Crop</option>
-            <option value="mobile">1280 × 720 px — Exact Mobile Crop</option>
-          </select>
-        </div>
-
-        <div class="control-group">
-          <div class="control-label-row">
-            <label for="exportFormatSelect">Format</label>
-            <label for="jpgQualitySlider" id="qualityLabel" class="quality-label hidden">Quality: <span id="qualityVal">92%</span></label>
-          </div>
-          <select id="exportFormatSelect" class="form-select">
-            <option value="png" selected>PNG (Lossless, sharpest text & logos)</option>
-            <option value="jpeg">JPG (Smaller file size)</option>
-            <option value="webp">WebP (Modern web format)</option>
-          </select>
-          <input type="range" id="jpgQualitySlider" class="hidden" min="50" max="100" value="92" step="1">
-        </div>
-
-        <div class="download-actions">
-          <button id="downloadBtn" class="btn btn-primary btn-block">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
-            </svg>
-            Download Perfect FB Cover
-          </button>
-          
-          <button id="copyClipboardBtn" class="btn btn-secondary btn-block" title="Copy high-res image to clipboard">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-            </svg>
-            Copy Image to Clipboard
-          </button>
-        </div>
-      </section>
-
-    </aside>
-
-    <!-- RIGHT MAIN WORKSPACE: CANVAS & DEVICE PREVIEWS (CLEAN, ZERO CLUTTER ON TOP) -->
-    <section class="main-workspace" aria-label="Editor and previews">
+    
+    <!-- ======================================================================
+         1. DEMO AREA (CANVAS & PREVIEWS) — LOCATED AT THE VERY TOP OF THE PAGE
+         ====================================================================== -->
+    <section class="main-workspace demo-area-top" id="demoArea" aria-label="Demo and preview workspace">
       
       <!-- Top Navigation Tabs -->
       <nav class="view-tabs" role="tablist" aria-label="Preview Modes">
@@ -421,7 +137,7 @@
 
           <div class="canvas-container" id="canvasContainer">
             <div class="canvas-wrapper" id="canvasWrapper">
-              <!-- Background Canvas (for blurred or solid backdrop) -->
+              <!-- Background Canvas -->
               <canvas id="bgCanvas" width="1640" height="720"></canvas>
               <!-- Main Image Canvas -->
               <canvas id="mainCanvas" width="1640" height="720"></canvas>
@@ -458,7 +174,6 @@
           </div>
           
           <div class="fb-desktop-mockup">
-            <!-- Simulated FB Navigation Bar -->
             <div class="fb-desktop-nav">
               <div class="fb-nav-left">
                 <div class="fb-logo-circle">f</div>
@@ -477,20 +192,15 @@
               </div>
             </div>
 
-            <!-- Profile Container -->
             <div class="fb-profile-container">
-              <!-- Cover Photo Frame (Cropped to 1640x624 display ratio) -->
               <div class="fb-cover-desktop-frame">
                 <canvas id="desktopPreviewCanvas" class="sim-canvas"></canvas>
                 <div class="cover-crop-indicator">
                   <span class="crop-tag">Desktop View (1640 × 624 px)</span>
                 </div>
-                <button class="fb-edit-cover-btn">
-                  📷 Edit cover photo
-                </button>
+                <button class="fb-edit-cover-btn">📷 Edit cover photo</button>
               </div>
 
-              <!-- Profile Details Under Cover -->
               <div class="fb-profile-header-info">
                 <div class="fb-avatar-wrapper">
                   <div class="fb-avatar-circle" id="desktopAvatar">
@@ -509,7 +219,6 @@
                 </div>
               </div>
 
-              <!-- FB Tabs -->
               <div class="fb-tabs-bar">
                 <span class="fb-tab active">Posts</span>
                 <span class="fb-tab">About</span>
@@ -529,43 +238,35 @@
           </div>
 
           <div class="mobile-device-wrapper">
-            <!-- Realistic smartphone chassis -->
             <div class="smartphone-frame">
               <div class="phone-speaker"></div>
               <div class="phone-camera"></div>
 
-              <!-- Phone Screen Content -->
               <div class="phone-screen">
-                <!-- Status bar -->
                 <div class="mobile-status-bar">
                   <span>9:41</span>
                   <span>📶 5G  🔋 100%</span>
                 </div>
 
-                <!-- FB Mobile Header -->
                 <div class="fb-mobile-top-bar">
                   <span class="back-arrow">‹</span>
                   <span class="fb-mobile-title">Your Profile</span>
                   <span class="search-icon">🔍</span>
                 </div>
 
-                <!-- Scrollable Mobile Profile View -->
                 <div class="mobile-profile-scroll">
-                  <!-- Mobile Cover Photo (Cropped to 1280x720 / 640x360 equivalent) -->
                   <div class="fb-cover-mobile-frame">
                     <canvas id="mobilePreviewCanvas" class="sim-canvas"></canvas>
                     <div class="mobile-cam-btn">📷</div>
                     <div class="mobile-crop-badge">Mobile 16:9 View</div>
                   </div>
 
-                  <!-- Mobile Avatar Overlap -->
                   <div class="fb-mobile-avatar-row">
                     <div class="fb-mobile-avatar">
                       <span class="avatar-letter">U</span>
                     </div>
                   </div>
 
-                  <!-- Name and info -->
                   <div class="fb-mobile-info">
                     <h3 class="fb-mobile-name">Your Name / Page</h3>
                     <p class="fb-mobile-bio">Welcome to my profile! Notice how the center safe zone stays crisp and clear.</p>
@@ -625,6 +326,286 @@
       </div>
 
     </section>
+
+    <!-- ======================================================================
+         2. CONTROLS PANEL (BELOW THE DEMO AREA)
+         ====================================================================== -->
+    <section class="controls-panel-bottom" aria-label="Controls and adjustments">
+      <div class="controls-grid">
+
+        <!-- 1. Upload & AI Image Generation Section -->
+        <div class="control-card">
+          <h2 class="section-title">
+            <span class="step-num">1</span> Image Source
+          </h2>
+
+          <div class="source-mode-toggle" role="tablist">
+            <button type="button" id="sourceUploadTab" class="source-mode-btn active" role="tab" aria-selected="true">
+              📁 Upload File
+            </button>
+            <button type="button" id="sourceAiTab" class="source-mode-btn" role="tab" aria-selected="false">
+              ✨ AI Generator
+            </button>
+          </div>
+          
+          <div id="uploadPane" class="source-pane active">
+            <div id="dropZone" class="drop-zone" tabindex="0" role="button" aria-label="Upload photo: drag and drop or click">
+              <input type="file" id="fileInput" accept="image/*" class="file-input-hidden" aria-label="Choose image file">
+              <div class="drop-zone-content">
+                <svg class="drop-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                  <path d="M12 12v9"></path>
+                  <path d="m8 16 4-4 4 4"></path>
+                </svg>
+                <p class="drop-prompt"><strong>Click to upload</strong> or drag & drop</p>
+                <p class="drop-hint">PNG, JPG, WebP, or paste (Ctrl+V)</p>
+              </div>
+            </div>
+
+            <div class="sample-picker">
+              <span class="sample-label">Or try a preset sample:</span>
+              <div class="sample-buttons">
+                <button type="button" class="btn-chip" data-sample="business">🏢 Business</button>
+                <button type="button" class="btn-chip" data-sample="nature">🌄 Nature</button>
+                <button type="button" class="btn-chip" data-sample="creative">🎨 Creative</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="aiGenPane" class="source-pane hidden">
+            <div class="ai-generator-box">
+              <label for="aiPromptInput" class="ai-label">Describe your cover image:</label>
+              <textarea id="aiPromptInput" class="ai-prompt-textarea" rows="2" placeholder="e.g. Modern tech startup office with glass walls, neon ambient lighting, cinematic photography"></textarea>
+              
+              <div class="ai-style-selector">
+                <span class="style-label">Style:</span>
+                <div class="style-chips">
+                  <button type="button" class="style-chip active" data-style="photorealistic">Photorealistic</button>
+                  <button type="button" class="style-chip" data-style="digital art">Digital Art</button>
+                  <button type="button" class="style-chip" data-style="3d render">3D Render</button>
+                  <button type="button" class="style-chip" data-style="minimalist">Minimalist</button>
+                  <button type="button" class="style-chip" data-style="cyberpunk">Cyberpunk</button>
+                </div>
+              </div>
+
+              <div class="ai-ideas-row">
+                <span class="ideas-label">Quick Ideas:</span>
+                <div class="ideas-scroll">
+                  <button type="button" class="btn-idea" data-idea="Luxury modern villa pool at golden hour, architectural digest photography, widescreen">🏡 Luxury Villa</button>
+                  <button type="button" class="btn-idea" data-idea="Cozy artisanal coffee shop interior with warm bokeh and wood accents, soft sunlight">☕ Cafe & Bakery</button>
+                  <button type="button" class="btn-idea" data-idea="Futuristic neon synthwave gaming setup with multi-monitor glow, 8k wallpaper">🎮 Gaming / Neon</button>
+                  <button type="button" class="btn-idea" data-idea="Epic misty alpine mountain peak reflection in crystal blue lake, panoramic landscape">🏔️ Nature Lake</button>
+                </div>
+              </div>
+
+              <button type="button" id="generateAiBtn" class="btn btn-primary btn-block ai-gen-btn">
+                <span class="ai-btn-icon">⚡</span>
+                <span class="ai-btn-text">Generate AI Cover Image</span>
+                <div id="aiLoadingSpinner" class="spinner hidden"></div>
+              </button>
+              <p id="aiStatusText" class="ai-status-text">Free unlimited generation • No API key required</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Sizing & Alignment Section -->
+        <div class="control-card">
+          <h2 class="section-title">
+            <span class="step-num">2</span> Sizing & Alignment
+          </h2>
+
+          <div class="fit-mode-selector">
+            <label class="control-label-row">
+              <span>Sizing Presets</span>
+              <span id="imageAspectBadge" class="value-badge">Auto Fit</span>
+            </label>
+            <div class="fit-buttons-grid">
+              <button type="button" id="fitContainBtn" class="btn btn-sm btn-fit active" title="Show entire photo without any edges cut off">
+                🖼️ Fit Whole Photo (No Cutoff)
+              </button>
+              <button type="button" id="fitCoverBtn" class="btn btn-sm btn-fit" title="Expand to fill entire 1640×720 canvas">
+                📐 Fill Full Canvas
+              </button>
+              <button type="button" id="fitSafeBtn" class="btn btn-sm btn-fit" title="Fit neatly inside PC & Mobile safe area">
+                🎯 Fit Inside Safe Zone
+              </button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label class="control-label-row">
+              <span>Position Alignment</span>
+            </label>
+            <div class="align-buttons-row">
+              <button type="button" id="alignTopBtn" class="btn btn-sm btn-align" title="Align photo to top edge">
+                ⬆ Top
+              </button>
+              <button type="button" id="centerImageBtn" class="btn btn-sm btn-align" title="Re-center image">
+                ⊙ Center
+              </button>
+              <button type="button" id="alignBottomBtn" class="btn btn-sm btn-align" title="Align photo to bottom edge">
+                ⬇ Bottom
+              </button>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="zoomSlider">Zoom Scale</label>
+              <span id="zoomVal" class="value-badge">100%</span>
+            </div>
+            <div class="slider-with-buttons">
+              <button type="button" id="zoomOutBtn" class="btn-mini" title="Zoom out">−</button>
+              <input type="range" id="zoomSlider" min="30" max="300" value="100" step="1">
+              <button type="button" id="zoomInBtn" class="btn-mini" title="Zoom in">+</button>
+            </div>
+          </div>
+
+          <div class="quick-transforms secondary">
+            <button type="button" id="rotateLeftBtn" class="btn btn-sm" title="Rotate left 90°">⤺ 90°</button>
+            <button type="button" id="rotateRightBtn" class="btn btn-sm" title="Rotate right 90°">⤻ 90°</button>
+            <button type="button" id="flipHBtn" class="btn btn-sm" title="Flip horizontally">Flip ⇄</button>
+            <button type="button" id="flipVBtn" class="btn btn-sm" title="Flip vertically">Flip ⇅</button>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="bgTypeSelect">Background Fill (For Margins)</label>
+            </div>
+            <select id="bgTypeSelect" class="form-select">
+              <option value="blur" selected>✨ Blurred Image (Smart Fill)</option>
+              <option value="color">🎨 Solid Color</option>
+              <option value="gradient">🌈 Subtle Dark Gradient</option>
+              <option value="transparent">⬜ Transparent (PNG)</option>
+            </select>
+          </div>
+
+          <div id="bgColorRow" class="control-group hidden">
+            <div class="control-label-row">
+              <label for="bgColorPicker">Fill Color</label>
+              <div class="color-picker-wrapper">
+                <input type="color" id="bgColorPicker" value="#1877F2">
+                <span id="bgColorHex" class="value-badge">#1877F2</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Safe Zone Guides & Overlays Section -->
+        <div class="control-card">
+          <h2 class="section-title">
+            <span class="step-num">3</span> Safe Zone Guides
+          </h2>
+
+          <div class="switches-list">
+            <label class="switch-row">
+              <input type="checkbox" id="showSafeZoneCheck" checked>
+              <div class="switch-ui"></div>
+              <div class="switch-text">
+                <span class="switch-label safe-label">Universal Safe Zone</span>
+                <span class="switch-desc">Visible on BOTH PC & Mobile (1280 × 624 px)</span>
+              </div>
+            </label>
+
+            <label class="switch-row">
+              <input type="checkbox" id="showDesktopCropCheck" checked>
+              <div class="switch-ui"></div>
+              <div class="switch-text">
+                <span class="switch-label desktop-label">Desktop PC Cutoff</span>
+                <span class="switch-desc">Top & bottom cropped on computers (-48px each)</span>
+              </div>
+            </label>
+
+            <label class="switch-row">
+              <input type="checkbox" id="showMobileCropCheck" checked>
+              <div class="switch-ui"></div>
+              <div class="switch-text">
+                <span class="switch-label mobile-label">Mobile Smartphone Cutoff</span>
+                <span class="switch-desc">Left & right cropped on phones (-180px each)</span>
+              </div>
+            </label>
+
+            <label class="switch-row">
+              <input type="checkbox" id="showThirdsCheck">
+              <div class="switch-ui"></div>
+              <div class="switch-text">
+                <span class="switch-label">Rule of Thirds Grid</span>
+                <span class="switch-desc">Harmonious alignment lines</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label for="avatarModeSelect">Avatar / Profile Picture Overlay</label>
+            <select id="avatarModeSelect" class="form-select">
+              <option value="none" selected>🚫 Clean View (No Profile Overlays)</option>
+              <option value="both">👤 Show Desktop & Mobile Avatar Positions</option>
+              <option value="personal">👤 Desktop Left Avatar Only</option>
+              <option value="page">🏢 Mobile Center Avatar Only</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="overlayOpacitySlider">Guide Opacity</label>
+              <span id="overlayOpacityVal" class="value-badge">65%</span>
+            </div>
+            <input type="range" id="overlayOpacitySlider" min="15" max="100" value="65" step="5">
+          </div>
+        </div>
+
+        <!-- 4. Export & Download Section -->
+        <div class="control-card">
+          <h2 class="section-title">
+            <span class="step-num">4</span> Download
+          </h2>
+
+          <div class="control-group">
+            <label for="resolutionSelect">Output Dimensions</label>
+            <select id="resolutionSelect" class="form-select">
+              <option value="2x" selected>1640 × 720 px — High-Res 2x (Recommended)</option>
+              <option value="1x">820 × 360 px — Standard 1x</option>
+              <option value="desktop">1640 × 624 px — Exact Desktop Crop</option>
+              <option value="mobile">1280 × 720 px — Exact Mobile Crop</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <div class="control-label-row">
+              <label for="exportFormatSelect">Format</label>
+              <label for="jpgQualitySlider" id="qualityLabel" class="quality-label hidden">Quality: <span id="qualityVal">92%</span></label>
+            </div>
+            <select id="exportFormatSelect" class="form-select">
+              <option value="png" selected>PNG (Lossless, sharpest text & logos)</option>
+              <option value="jpeg">JPG (Smaller file size)</option>
+              <option value="webp">WebP (Modern web format)</option>
+            </select>
+            <input type="range" id="jpgQualitySlider" class="hidden" min="50" max="100" value="92" step="1">
+          </div>
+
+          <div class="download-actions">
+            <button id="downloadBtn" class="btn btn-primary btn-block">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              Download Perfect FB Cover
+            </button>
+            
+            <button id="copyClipboardBtn" class="btn btn-secondary btn-block" title="Copy high-res image to clipboard">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy Image to Clipboard
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
   </main>
 
   <!-- MODAL: How Facebook Crops Dialog -->
