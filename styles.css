@@ -995,6 +995,8 @@ input[type="color"] {
 .dot.green { background-color: var(--safe-green); box-shadow: 0 0 6px var(--safe-green); }
 .dot.orange { background-color: var(--crop-orange); box-shadow: 0 0 6px var(--crop-orange); }
 .dot.blue { background-color: var(--crop-blue); box-shadow: 0 0 6px var(--crop-blue); }
+.dot.pink { background-color: #ec4899; box-shadow: 0 0 6px #ec4899; }
+.dot.cyan { background-color: #00d2ff; box-shadow: 0 0 6px #00d2ff; }
 
 .canvas-container {
   flex: 1;

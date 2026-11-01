@@ -44,7 +44,7 @@
       desktopCrop: true,
       mobileCrop: true,
       ruleOfThirds: false,
-      avatarMode: 'none', // 'none' by default for clean view
+      avatarMode: 'both', // 'both' by default so profile circles are always visible
       opacity: 0.65
     },
     avatarImage: null,
@@ -70,6 +70,7 @@
     mainCanvas: document.getElementById('mainCanvas'),
     guideCanvas: document.getElementById('guideCanvas'),
     layersOverlay: document.getElementById('layersOverlay'),
+    toggleLayersBtn: document.getElementById('toggleLayersBtn'),
     resetLayersBtn: document.getElementById('resetLayersBtn'),
     canvasWrapper: document.getElementById('canvasWrapper'),
     canvasContainer: document.getElementById('canvasContainer'),
@@ -194,13 +195,61 @@
       img.onload = () => {
         setImage(img);
         if (elements.layersOverlay) elements.layersOverlay.classList.remove('hidden');
+        if (elements.toggleLayersBtn) {
+          elements.toggleLayersBtn.textContent = '✥ Moveable Sections: ON';
+          elements.toggleLayersBtn.classList.add('btn-primary');
+          elements.toggleLayersBtn.classList.remove('btn-secondary');
+        }
         showToast('Loaded Davidson Digital Design — all sections are moveable!');
       };
       img.onerror = () => {
-        showToast('Could not load Davidson background, falling back to business preset');
-        loadSampleImage('business');
+        // Procedurally generate high-tech cyber background so it works even offline
+        const off = document.createElement('canvas');
+        off.width = CANVAS_WIDTH;
+        off.height = CANVAS_HEIGHT;
+        const octx = off.getContext('2d');
+
+        octx.fillStyle = '#05070d';
+        octx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        const glowL = octx.createRadialGradient(290, 150, 20, 290, 150, 420);
+        glowL.addColorStop(0, 'rgba(0, 210, 255, 0.35)');
+        glowL.addColorStop(0.5, 'rgba(0, 140, 255, 0.12)');
+        glowL.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        octx.fillStyle = glowL;
+        octx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        const glowR = octx.createRadialGradient(1350, 280, 20, 1350, 280, 520);
+        glowR.addColorStop(0, 'rgba(147, 51, 234, 0.32)');
+        glowR.addColorStop(0.5, 'rgba(79, 70, 229, 0.10)');
+        glowR.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        octx.fillStyle = glowR;
+        octx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+        octx.strokeStyle = 'rgba(0, 210, 255, 0.08)';
+        octx.lineWidth = 1;
+        for (let x = 0; x < CANVAS_WIDTH; x += 40) {
+          octx.beginPath();
+          octx.moveTo(x, 0);
+          octx.lineTo(x, CANVAS_HEIGHT);
+          octx.stroke();
+        }
+        for (let y = 0; y < CANVAS_HEIGHT; y += 40) {
+          octx.beginPath();
+          octx.moveTo(0, y);
+          octx.lineTo(CANVAS_WIDTH, y);
+          octx.stroke();
+        }
+
+        const procImg = new Image();
+        procImg.onload = () => {
+          setImage(procImg);
+          if (elements.layersOverlay) elements.layersOverlay.classList.remove('hidden');
+          showToast('Loaded Davidson Digital Design — all sections are moveable!');
+        };
+        procImg.src = off.toDataURL();
       };
-      img.src = 'cyber_background.png?t=' + Date.now();
+      img.src = 'cyber_background.png';
       return;
     }
 
@@ -670,9 +719,11 @@
     // --- Profile Picture Avatars Overlay ---
     if (state.guides.avatarMode !== 'none') {
       const mode = state.guides.avatarMode;
+      const isDesktop = mode === 'both' || mode === 'desktop' || mode === 'personal';
+      const isMobile = mode === 'both' || mode === 'mobile' || mode === 'page';
 
       // 1. Desktop Profile (Bottom-left circular overlap)
-      if (mode === 'both' || mode === 'desktop') {
+      if (isDesktop) {
         const desktopAvatarR = 135;
         const desktopAvatarX = SAFE_ZONE.x + 140; // 320px
         const desktopAvatarY = 590; // Overlaps bottom edge of desktop cover (624 visible, y=48..672)
@@ -682,14 +733,14 @@
           desktopAvatarX,
           desktopAvatarY,
           desktopAvatarR,
-          '🖥️ Desktop Avatar Overlap',
+          'Desktop Avatar Overlap (PC)',
           '#38bdf8',
           'Covers this area on PC & Mac'
         );
       }
 
       // 2. Mobile Profile (Centered bottom circular overlap)
-      if (mode === 'both' || mode === 'mobile') {
+      if (isMobile) {
         const mobileAvatarR = 110;
         const mobileAvatarX = CANVAS_WIDTH / 2; // 820px
         const mobileAvatarY = 580; // Overlaps bottom center
@@ -699,7 +750,7 @@
           mobileAvatarX,
           mobileAvatarY,
           mobileAvatarR,
-          '📱 Mobile Avatar Overlap',
+          'Mobile Avatar Overlap (Phone)',
           '#ec4899',
           'Covers this area on smartphones'
         );
@@ -832,6 +883,24 @@
         ctx.shadowColor = 'rgba(0, 210, 255, 0.7)';
         ctx.shadowBlur = 16;
         ctx.drawImage(emblemImg, x, y, 64, 64);
+        ctx.restore();
+      } else {
+        // High-tech vector emblem fallback
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 210, 255, 0.7)';
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = 'rgba(8, 20, 36, 0.9)';
+        ctx.strokeStyle = '#00d2ff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x + 32, y + 32, 28, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = '#00d2ff';
+        ctx.font = '900 22px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('D3', x + 32, y + 32);
         ctx.restore();
       }
       ctx.save();
@@ -1061,6 +1130,12 @@
             el.style.top = (coords.y / CANVAS_HEIGHT * 100) + '%';
           }
         });
+        if (elements.layersOverlay) elements.layersOverlay.classList.remove('hidden');
+        if (elements.toggleLayersBtn) {
+          elements.toggleLayersBtn.textContent = '✥ Moveable Sections: ON';
+          elements.toggleLayersBtn.classList.add('btn-primary');
+          elements.toggleLayersBtn.classList.remove('btn-secondary');
+        }
         syncPreviews();
         showToast('All sections reset to default positions');
       });
@@ -1251,8 +1326,8 @@
 
     // 5. Sync simulator avatar DOM elements
     const mode = state.guides.avatarMode;
-    const hideDesktop = mode === 'none' || mode === 'mobile';
-    const hideMobile = mode === 'none' || mode === 'desktop';
+    const hideDesktop = mode === 'none' || mode === 'mobile' || mode === 'page';
+    const hideMobile = mode === 'none' || mode === 'desktop' || mode === 'personal';
 
     if (elements.desktopAvatar) {
       elements.desktopAvatar.style.display = hideDesktop ? 'none' : 'flex';
@@ -1659,6 +1734,17 @@
         syncPreviews();
       });
     });
+
+    if (elements.toggleLayersBtn && elements.layersOverlay) {
+      elements.toggleLayersBtn.addEventListener('click', () => {
+        const isHidden = elements.layersOverlay.classList.toggle('hidden');
+        elements.toggleLayersBtn.textContent = isHidden ? '✥ Moveable Sections: OFF' : '✥ Moveable Sections: ON';
+        elements.toggleLayersBtn.classList.toggle('btn-primary', !isHidden);
+        elements.toggleLayersBtn.classList.toggle('btn-secondary', isHidden);
+        syncPreviews();
+        showToast(isHidden ? 'Moveable sections hidden' : 'Moveable sections enabled — drag each section!');
+      });
+    }
 
     if (elements.uploadAvatarBtn && elements.avatarFileInput) {
       elements.uploadAvatarBtn.addEventListener('click', () => {

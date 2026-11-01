@@ -125,13 +125,23 @@
                 <line x1="2" y1="12" x2="22" y2="12"></line>
                 <line x1="12" y1="2" x2="12" y2="22"></line>
               </svg>
-              <span><strong>Drag</strong> to position • <strong>Scroll wheel</strong> to zoom</span>
+              <span><strong>Drag</strong> photo / sections • <strong>Scroll</strong> zoom</span>
             </div>
 
             <div class="legend-pills">
-              <span class="legend-pill safe"><span class="dot green"></span> Safe Zone (Visible Everywhere)</span>
-              <span class="legend-pill desktop"><span class="dot orange"></span> Desktop Top/Bottom Cutoff</span>
-              <span class="legend-pill mobile"><span class="dot blue"></span> Mobile Left/Right Cutoff</span>
+              <span class="legend-pill safe"><span class="dot green"></span> Safe Zone (1280×624)</span>
+              <span class="legend-pill desktop"><span class="dot orange"></span> PC Cutoff</span>
+              <span class="legend-pill mobile"><span class="dot blue"></span> Phone Cutoff</span>
+              <span class="legend-pill avatar-pill"><span class="dot pink"></span> Profile Avatar Circles</span>
+            </div>
+
+            <div class="layer-quick-actions" style="display: flex; gap: 8px; align-items: center; margin-left: auto;">
+              <button type="button" id="toggleLayersBtn" class="btn btn-primary btn-sm" title="Toggle Moveable Sections Overlay">
+                ✥ Moveable Sections: ON
+              </button>
+              <button type="button" id="resetLayersBtn" class="btn btn-secondary btn-sm" title="Reset all moveable sections to default safe spots">
+                ↺ Reset Sections
+              </button>
             </div>
           </div>
 
@@ -143,6 +153,93 @@
               <canvas id="mainCanvas" width="1640" height="720"></canvas>
               <!-- Overlay & Guides Canvas -->
               <canvas id="guideCanvas" width="1640" height="720"></canvas>
+
+              <!-- Interactive Moveable Sections Overlay (Each section draggable individually!) -->
+              <div id="layersOverlay" class="layers-overlay">
+                <!-- Layer 1: Emblem & Brand Title -->
+                <div id="layer-emblem" class="moveable-layer" data-x="210" data-y="68" style="left: 12.8%; top: 9.4%;">
+                  <div class="layer-handle">✥ Brand Emblem</div>
+                  <div class="emblem-content">
+                    <img src="assets/emblem_clean_alpha.png" class="layer-emblem-img" alt="Emblem" />
+                    <div class="emblem-text-col">
+                      <div class="brand-title-row">
+                        <span class="brand-word-davidson">DAVIDSON</span>
+                        <span class="brand-word-digital">DIGITAL</span>
+                        <span class="brand-word-design">DESIGN</span>
+                      </div>
+                      <div class="brand-sub-row">LOCAL WEBSITES • SIMPLE AI • HONEST SERVICE</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Layer 2: Live Status HUD -->
+                <div id="layer-hud" class="moveable-layer" data-x="1040" data-y="64" style="left: 63.4%; top: 8.9%;">
+                  <div class="layer-handle">✥ Status HUD</div>
+                  <div class="hud-box">
+                    <div class="hud-row-top">
+                      <span class="hud-dot"></span>
+                      <span class="hud-status">SYS_STATUS: ONLINE // PERTH NODE</span>
+                    </div>
+                    <div class="hud-row-bottom">
+                      <span>LISTOWEL, ONTARIO</span>
+                      <span class="hud-rtt">RTT: 12ms</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Layer 3: Main Headline -->
+                <div id="layer-headline" class="moveable-layer" data-x="210" data-y="140" style="left: 12.8%; top: 19.4%;">
+                  <div class="layer-handle">✥ Headline</div>
+                  <div class="headline-box">
+                    <span class="eyebrow-tag">[ 01 // ARCHITECTURE &amp; INTELLIGENCE ]</span>
+                    <h1 class="hero-headline-1">High-Performance Web Platforms.</h1>
+                    <h2 class="hero-headline-2">Autonomous AI Systems.</h2>
+                  </div>
+                </div>
+
+                <!-- Layer 4: Sub-lead Paragraph -->
+                <div id="layer-sublead" class="moveable-layer" data-x="210" data-y="278" style="left: 12.8%; top: 38.6%;">
+                  <div class="layer-handle">✥ Sub-Lead</div>
+                  <p class="hero-sublead">Engineered for pure speed, local organic dominance, and automated lead workflows.</p>
+                </div>
+
+                <!-- Layer 5: Telemetry Chips -->
+                <div id="layer-chips" class="moveable-layer" data-x="210" data-y="335" style="left: 12.8%; top: 46.5%;">
+                  <div class="layer-handle">✥ Feature Chips</div>
+                  <div class="chips-row">
+                    <div class="telemetry-chip chip-cyan">
+                      <div class="chip-accent-bar"></div>
+                      <div class="chip-content">
+                        <div class="chip-tag">⚡ 99+ SPEED</div>
+                        <div class="chip-detail">Zero bloat · Sub-second TTFB</div>
+                      </div>
+                    </div>
+                    <div class="telemetry-chip chip-purple">
+                      <div class="chip-accent-bar"></div>
+                      <div class="chip-content">
+                        <div class="chip-tag">🤖 CUSTOM AI</div>
+                        <div class="chip-detail">Autonomous workflows &amp; bots</div>
+                      </div>
+                    </div>
+                    <div class="telemetry-chip chip-teal">
+                      <div class="chip-accent-bar"></div>
+                      <div class="chip-content">
+                        <div class="chip-tag">🎯 LOCAL RANK</div>
+                        <div class="chip-detail">Top 3-Pack SEO in Perth &amp; Minto</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Layer 6: Terminal Box CTA -->
+                <div id="layer-terminal" class="moveable-layer" data-x="1090" data-y="330" style="left: 66.5%; top: 45.8%;">
+                  <div class="layer-handle">✥ Terminal CTA</div>
+                  <div class="terminal-box">
+                    <div class="term-header">root@davidsondigital:~# ping domain</div>
+                    <div class="term-domain">davidsondigitaldesign.com <span class="term-cursor"></span></div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -537,11 +634,11 @@
 
           <div class="control-group">
             <label for="avatarModeSelect">Avatar / Profile Picture Overlay</label>
-            <select id="avatarModeSelect" class="form-select">
-              <option value="none" selected>🚫 Clean View (No Profile Overlays)</option>
-              <option value="both">👤 Show Desktop & Mobile Avatar Positions</option>
-              <option value="personal">👤 Desktop Left Avatar Only</option>
-              <option value="page">🏢 Mobile Center Avatar Only</option>
+            <select id="avatarModeSelect" class="form-select avatar-mode-sync">
+              <option value="both" selected>👤 Show Desktop &amp; Mobile Profile Circles (Both)</option>
+              <option value="desktop">💻 Desktop Avatar Overlap Only (Bottom-Left)</option>
+              <option value="mobile">📱 Mobile Avatar Overlap Only (Bottom-Center)</option>
+              <option value="none">🚫 Clean View (Hide Profile Circles)</option>
             </select>
           </div>
 
