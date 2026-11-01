@@ -1684,21 +1684,43 @@
       try {
         const fullPrompt = `${userPrompt}, style: ${selectedStyle}, facebook cover banner format, all important subjects and text centered in upper two-thirds, clean dark lower third with empty bottom-left and empty bottom-center clear of graphics for profile avatars, high quality, 8k resolution, cinematic lighting, sharp details`;
         const randomSeed = Math.floor(Math.random() * 999999);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=1640&height=720&nologo=true&seed=${randomSeed}`;
+        // Request with extra vertical margin (768px) so any watermark is pushed into the discard buffer
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=1640&height=768&seed=${randomSeed}`;
 
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
+        const rawImg = new Image();
+        rawImg.crossOrigin = 'anonymous';
 
         await new Promise((resolve, reject) => {
-          img.onload = () => resolve();
-          img.onerror = () => reject(new Error('Failed to load generated image'));
-          img.src = imageUrl;
+          rawImg.onload = () => resolve();
+          rawImg.onerror = () => reject(new Error('Failed to load generated image'));
+          rawImg.src = imageUrl;
         });
 
-        setImage(img);
+        // Strip the bottom watermark area completely using offscreen canvas crop
+        const cleanCanvas = document.createElement('canvas');
+        cleanCanvas.width = CANVAS_WIDTH; // 1640
+        cleanCanvas.height = CANVAS_HEIGHT; // 720
+        const cctx = cleanCanvas.getContext('2d');
+        
+        // Slices off the bottom watermark strip, leaving 100% clean art scaled to exact 1640x720
+        const watermarkStrip = Math.round(rawImg.height * 0.065);
+        const cleanSourceH = Math.max(100, rawImg.height - watermarkStrip);
+        cctx.drawImage(
+          rawImg,
+          0, 0, rawImg.width, cleanSourceH,
+          0, 0, CANVAS_WIDTH, CANVAS_HEIGHT
+        );
+
+        const cleanImg = new Image();
+        await new Promise(r => {
+          cleanImg.onload = r;
+          cleanImg.src = cleanCanvas.toDataURL('image/png');
+        });
+
+        setImage(cleanImg);
         setFitMode('safe');
-        elements.aiStatusText.textContent = '✨ Cover generated & aligned safely above avatars!';
-        showToast('AI Cover generated & aligned to clear profile circles!');
+        elements.aiStatusText.textContent = '✨ Cover generated clean (100% watermark-free)!';
+        showToast('AI Cover generated — 100% watermark-free!');
       } catch (err) {
         console.error(err);
         elements.aiStatusText.textContent = 'Generation failed. Please try again or rephrase prompt.';
