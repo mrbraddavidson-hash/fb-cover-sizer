@@ -71,7 +71,11 @@
     guideCanvas: document.getElementById('guideCanvas'),
     layersOverlay: document.getElementById('layersOverlay'),
     toggleLayersBtn: document.getElementById('toggleLayersBtn'),
+    restoreLayersBtn: document.getElementById('restoreLayersBtn'),
     resetLayersBtn: document.getElementById('resetLayersBtn'),
+    restoreAllElementsBtn: document.getElementById('restoreAllElementsBtn'),
+    clearAllElementsBtn: document.getElementById('clearAllElementsBtn'),
+    layersManagerList: document.getElementById('layersManagerList'),
     canvasWrapper: document.getElementById('canvasWrapper'),
     canvasContainer: document.getElementById('canvasContainer'),
 
@@ -873,9 +877,13 @@
   function drawMoveableLayers(ctx) {
     if (!elements.layersOverlay || elements.layersOverlay.classList.contains('hidden')) return;
 
+    function isLayerActive(el) {
+      return el && !el.classList.contains('deleted') && el.style.display !== 'none';
+    }
+
     // 1. Emblem & Brand Title
     const emblemEl = document.getElementById('layer-emblem');
-    if (emblemEl) {
+    if (isLayerActive(emblemEl)) {
       const x = parseInt(emblemEl.dataset.x, 10) || 210;
       const y = parseInt(emblemEl.dataset.y, 10) || 70;
       if (emblemImg.complete && emblemImg.naturalWidth > 0) {
@@ -919,7 +927,7 @@
 
     // 2. Top-Right HUD Module
     const hudEl = document.getElementById('layer-hud');
-    if (hudEl) {
+    if (isLayerActive(hudEl)) {
       const x = parseInt(hudEl.dataset.x, 10) || 1040;
       const y = parseInt(hudEl.dataset.y, 10) || 64;
       const w = 390;
@@ -952,7 +960,7 @@
 
     // 3. Headline
     const hlEl = document.getElementById('layer-headline');
-    if (hlEl) {
+    if (isLayerActive(hlEl)) {
       const x = parseInt(hlEl.dataset.x, 10) || 210;
       const y = parseInt(hlEl.dataset.y, 10) || 140;
       ctx.save();
@@ -970,7 +978,7 @@
 
     // 4. Sub-lead
     const subEl = document.getElementById('layer-sublead');
-    if (subEl) {
+    if (isLayerActive(subEl)) {
       const x = parseInt(subEl.dataset.x, 10) || 210;
       const y = parseInt(subEl.dataset.y, 10) || 278;
       ctx.save();
@@ -982,7 +990,7 @@
 
     // 5. Telemetry Chips
     const chipsEl = document.getElementById('layer-chips');
-    if (chipsEl) {
+    if (isLayerActive(chipsEl)) {
       const startX = parseInt(chipsEl.dataset.x, 10) || 210;
       const y = parseInt(chipsEl.dataset.y, 10) || 335;
       const chips = [
@@ -1019,7 +1027,7 @@
 
     // 6. Terminal Module
     const termEl = document.getElementById('layer-terminal');
-    if (termEl) {
+    if (isLayerActive(termEl)) {
       const x = parseInt(termEl.dataset.x, 10) || 1090;
       const y = parseInt(termEl.dataset.y, 10) || 330;
       const w = 340;
@@ -1048,7 +1056,75 @@
     }
   }
 
-  // Interactive Drag & Drop for all Moveable Layers
+  // Interactive Drag & Drop, Selection & Deletion for Moveable Layers
+  let selectedLayer = null;
+  let deletedHistory = [];
+
+  function deleteLayer(layer) {
+    if (!layer) return;
+    layer.classList.remove('selected');
+    layer.classList.add('deleted');
+    if (!deletedHistory.includes(layer.id)) {
+      deletedHistory.push(layer.id);
+    }
+    updateRestoreBtnState();
+    syncPreviews();
+
+    const layerTitle = layer.querySelector('.handle-title')?.textContent?.replace('✥', '').trim() || 'Element';
+    showToast(`Deleted ${layerTitle} • Click "Restore" to undo`);
+  }
+
+  function restoreLayer(layerId) {
+    const layer = document.getElementById(layerId);
+    if (layer) {
+      layer.classList.remove('deleted');
+      deletedHistory = deletedHistory.filter(id => id !== layerId);
+      updateRestoreBtnState();
+      syncPreviews();
+    }
+  }
+
+  function restoreAllLayers() {
+    document.querySelectorAll('.moveable-layer').forEach(l => {
+      l.classList.remove('deleted');
+    });
+    deletedHistory = [];
+    updateRestoreBtnState();
+    if (elements.layersOverlay) elements.layersOverlay.classList.remove('hidden');
+    syncPreviews();
+    showToast('Restored all deleted elements');
+  }
+
+  function clearAllLayers() {
+    document.querySelectorAll('.moveable-layer').forEach(l => {
+      l.classList.remove('selected');
+      l.classList.add('deleted');
+      if (!deletedHistory.includes(l.id)) deletedHistory.push(l.id);
+    });
+    selectedLayer = null;
+    updateRestoreBtnState();
+    syncPreviews();
+    showToast('All elements removed • Clean background active');
+  }
+
+  function updateRestoreBtnState() {
+    const deletedCount = document.querySelectorAll('.moveable-layer.deleted').length;
+    if (elements.restoreLayersBtn) {
+      elements.restoreLayersBtn.textContent = `↺ Restore (${deletedCount})`;
+      elements.restoreLayersBtn.style.display = deletedCount > 0 ? 'inline-flex' : 'none';
+    }
+
+    // Update checkboxes & styles in #layersManagerList
+    document.querySelectorAll('.layer-item-row').forEach(row => {
+      const targetId = row.getAttribute('data-target');
+      const targetEl = document.getElementById(targetId);
+      const cb = row.querySelector('.layer-toggle-cb');
+      const isDel = targetEl ? targetEl.classList.contains('deleted') : false;
+      row.classList.toggle('is-deleted', isDel);
+      if (cb) cb.checked = !isDel;
+    });
+  }
+
   function setupLayerDragging() {
     const layers = document.querySelectorAll('.moveable-layer');
     layers.forEach(layer => {
@@ -1058,11 +1134,34 @@
       let startX = 0;
       let startY = 0;
 
+      // Click to select layer
+      layer.addEventListener('click', (e) => {
+        if (e.target.closest('.btn-layer-delete')) return;
+        document.querySelectorAll('.moveable-layer').forEach(l => l.classList.remove('selected'));
+        layer.classList.add('selected');
+        selectedLayer = layer;
+      });
+
+      // Delete button on layer handle
+      const delBtn = layer.querySelector('.btn-layer-delete');
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteLayer(layer);
+        });
+      }
+
       layer.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
+        if (e.target.closest('.btn-layer-delete')) return;
         e.stopPropagation();
         isDraggingLayer = true;
         layer.classList.add('dragging');
+
+        // Select when user clicks/drags
+        document.querySelectorAll('.moveable-layer').forEach(l => l.classList.remove('selected'));
+        layer.classList.add('selected');
+        selectedLayer = layer;
 
         startClientX = e.clientX;
         startClientY = e.clientY;
@@ -1111,6 +1210,43 @@
       layer.addEventListener('pointercancel', stopLayerDrag);
     });
 
+    // Keyboard Delete (Del or Backspace)
+    window.addEventListener('keydown', (e) => {
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName)) return;
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedLayer) {
+        e.preventDefault();
+        deleteLayer(selectedLayer);
+      }
+    });
+
+    // Clicking outside canvas elements deselects
+    document.addEventListener('pointerdown', (e) => {
+      if (!e.target.closest('.moveable-layer') && !e.target.closest('.layer-quick-actions') && !e.target.closest('#layersManagerList')) {
+        document.querySelectorAll('.moveable-layer').forEach(l => l.classList.remove('selected'));
+        selectedLayer = null;
+      }
+    });
+
+    // Toolbar Restore Button (Restores last deleted or all)
+    if (elements.restoreLayersBtn) {
+      elements.restoreLayersBtn.addEventListener('click', () => {
+        if (deletedHistory.length > 0) {
+          const lastId = deletedHistory.pop();
+          const lastEl = document.getElementById(lastId);
+          if (lastEl) {
+            lastEl.classList.remove('deleted');
+            updateRestoreBtnState();
+            syncPreviews();
+            const name = lastEl.querySelector('.handle-title')?.textContent?.replace('✥', '').trim() || 'Element';
+            showToast(`Restored ${name}`);
+          }
+        } else {
+          restoreAllLayers();
+        }
+      });
+    }
+
+    // Reset All button
     if (elements.resetLayersBtn) {
       elements.resetLayersBtn.addEventListener('click', () => {
         const defaults = {
@@ -1128,8 +1264,12 @@
             el.dataset.y = coords.y;
             el.style.left = (coords.x / CANVAS_WIDTH * 100) + '%';
             el.style.top = (coords.y / CANVAS_HEIGHT * 100) + '%';
+            el.classList.remove('deleted');
+            el.classList.remove('selected');
           }
         });
+        deletedHistory = [];
+        updateRestoreBtnState();
         if (elements.layersOverlay) elements.layersOverlay.classList.remove('hidden');
         if (elements.toggleLayersBtn) {
           elements.toggleLayersBtn.textContent = '✥ Moveable Sections: ON';
@@ -1137,9 +1277,51 @@
           elements.toggleLayersBtn.classList.remove('btn-secondary');
         }
         syncPreviews();
-        showToast('All sections reset to default positions');
+        showToast('All sections restored and reset to default positions');
       });
     }
+
+    // Restore All Elements button in card
+    if (elements.restoreAllElementsBtn) {
+      elements.restoreAllElementsBtn.addEventListener('click', restoreAllLayers);
+    }
+
+    // Clear All Elements button in card
+    if (elements.clearAllElementsBtn) {
+      elements.clearAllElementsBtn.addEventListener('click', clearAllLayers);
+    }
+
+    // Checkboxes in #layersManagerList
+    document.querySelectorAll('.layer-toggle-cb').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const targetId = cb.getAttribute('data-layer');
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          if (cb.checked) {
+            targetEl.classList.remove('deleted');
+            deletedHistory = deletedHistory.filter(id => id !== targetId);
+          } else {
+            targetEl.classList.add('deleted');
+            if (!deletedHistory.includes(targetId)) deletedHistory.push(targetId);
+          }
+          updateRestoreBtnState();
+          syncPreviews();
+        }
+      });
+    });
+
+    // Delete buttons in #layersManagerList
+    document.querySelectorAll('.btn-row-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const targetId = btn.getAttribute('data-layer');
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          deleteLayer(targetEl);
+        }
+      });
+    });
+
+    updateRestoreBtnState();
   }
 
   function syncPreviews() {

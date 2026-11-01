@@ -139,8 +139,11 @@
               <button type="button" id="toggleLayersBtn" class="btn btn-primary btn-sm" title="Toggle Moveable Sections Overlay">
                 ✥ Moveable Sections: ON
               </button>
+              <button type="button" id="restoreLayersBtn" class="btn btn-secondary btn-sm" style="display: none; background: rgba(16, 185, 129, 0.2); border-color: rgba(16, 185, 129, 0.5); color: #34d399;" title="Restore deleted elements">
+                ↺ Restore (0)
+              </button>
               <button type="button" id="resetLayersBtn" class="btn btn-secondary btn-sm" title="Reset all moveable sections to default safe spots">
-                ↺ Reset Sections
+                ↺ Reset All
               </button>
             </div>
           </div>
@@ -158,7 +161,10 @@
               <div id="layersOverlay" class="layers-overlay">
                 <!-- Layer 1: Emblem & Brand Title -->
                 <div id="layer-emblem" class="moveable-layer" data-x="210" data-y="68" style="left: 12.8%; top: 9.4%;">
-                  <div class="layer-handle">✥ Brand Emblem</div>
+                  <div class="layer-handle">
+                    <span class="handle-title">✥ Brand Emblem</span>
+                    <button type="button" class="btn-layer-delete" title="Delete element (Del)" aria-label="Delete">✕</button>
+                  </div>
                   <div class="emblem-content">
                     <img src="assets/emblem_clean_alpha.png" class="layer-emblem-img" alt="Emblem" />
                     <div class="emblem-text-col">
@@ -174,7 +180,10 @@
 
                 <!-- Layer 2: Live Status HUD -->
                 <div id="layer-hud" class="moveable-layer" data-x="1040" data-y="64" style="left: 63.4%; top: 8.9%;">
-                  <div class="layer-handle">✥ Status HUD</div>
+                  <div class="layer-handle">
+                    <span class="handle-title">✥ Status HUD</span>
+                    <button type="button" class="btn-layer-delete" title="Delete element (Del)" aria-label="Delete">✕</button>
+                  </div>
                   <div class="hud-box">
                     <div class="hud-row-top">
                       <span class="hud-dot"></span>
@@ -189,7 +198,10 @@
 
                 <!-- Layer 3: Main Headline -->
                 <div id="layer-headline" class="moveable-layer" data-x="210" data-y="140" style="left: 12.8%; top: 19.4%;">
-                  <div class="layer-handle">✥ Headline</div>
+                  <div class="layer-handle">
+                    <span class="handle-title">✥ Headline</span>
+                    <button type="button" class="btn-layer-delete" title="Delete element (Del)" aria-label="Delete">✕</button>
+                  </div>
                   <div class="headline-box">
                     <span class="eyebrow-tag">[ 01 // ARCHITECTURE &amp; INTELLIGENCE ]</span>
                     <h1 class="hero-headline-1">High-Performance Web Platforms.</h1>
@@ -199,13 +211,19 @@
 
                 <!-- Layer 4: Sub-lead Paragraph -->
                 <div id="layer-sublead" class="moveable-layer" data-x="210" data-y="278" style="left: 12.8%; top: 38.6%;">
-                  <div class="layer-handle">✥ Sub-Lead</div>
+                  <div class="layer-handle">
+                    <span class="handle-title">✥ Sub-Lead</span>
+                    <button type="button" class="btn-layer-delete" title="Delete element (Del)" aria-label="Delete">✕</button>
+                  </div>
                   <p class="hero-sublead">Engineered for pure speed, local organic dominance, and automated lead workflows.</p>
                 </div>
 
                 <!-- Layer 5: Telemetry Chips -->
                 <div id="layer-chips" class="moveable-layer" data-x="210" data-y="335" style="left: 12.8%; top: 46.5%;">
-                  <div class="layer-handle">✥ Feature Chips</div>
+                  <div class="layer-handle">
+                    <span class="handle-title">✥ Feature Chips</span>
+                    <button type="button" class="btn-layer-delete" title="Delete element (Del)" aria-label="Delete">✕</button>
+                  </div>
                   <div class="chips-row">
                     <div class="telemetry-chip chip-cyan">
                       <div class="chip-accent-bar"></div>
@@ -233,7 +251,10 @@
 
                 <!-- Layer 6: Terminal Box CTA -->
                 <div id="layer-terminal" class="moveable-layer" data-x="1090" data-y="330" style="left: 66.5%; top: 45.8%;">
-                  <div class="layer-handle">✥ Terminal CTA</div>
+                  <div class="layer-handle">
+                    <span class="handle-title">✥ Terminal CTA</span>
+                    <button type="button" class="btn-layer-delete" title="Delete element (Del)" aria-label="Delete">✕</button>
+                  </div>
                   <div class="terminal-box">
                     <div class="term-header">root@davidsondigital:~# ping domain</div>
                     <div class="term-domain">davidsondigitaldesign.com <span class="term-cursor"></span></div>
@@ -588,10 +609,80 @@
           </div>
         </div>
 
-        <!-- 3. Safe Zone Guides & Overlays Section -->
+        <!-- 3. Moveable Elements & Layers -->
         <div class="control-card">
           <h2 class="section-title">
-            <span class="step-num">3</span> Safe Zone Guides
+            <span class="step-num">3</span> Moveable Elements
+          </h2>
+
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">
+            Drag to reposition. Click <strong>✕</strong> on any element or press <strong>Del</strong> to remove.
+          </p>
+
+          <div class="layers-manager-list" id="layersManagerList">
+            <div class="layer-item-row" data-target="layer-emblem">
+              <label class="layer-item-label">
+                <input type="checkbox" checked class="layer-toggle-cb" data-layer="layer-emblem">
+                <span>✥ Brand Emblem &amp; Logo</span>
+              </label>
+              <button type="button" class="btn-row-delete" data-layer="layer-emblem" title="Delete element">✕</button>
+            </div>
+
+            <div class="layer-item-row" data-target="layer-hud">
+              <label class="layer-item-label">
+                <input type="checkbox" checked class="layer-toggle-cb" data-layer="layer-hud">
+                <span>✥ Status HUD Pill</span>
+              </label>
+              <button type="button" class="btn-row-delete" data-layer="layer-hud" title="Delete element">✕</button>
+            </div>
+
+            <div class="layer-item-row" data-target="layer-headline">
+              <label class="layer-item-label">
+                <input type="checkbox" checked class="layer-toggle-cb" data-layer="layer-headline">
+                <span>✥ Main Headline</span>
+              </label>
+              <button type="button" class="btn-row-delete" data-layer="layer-headline" title="Delete element">✕</button>
+            </div>
+
+            <div class="layer-item-row" data-target="layer-sublead">
+              <label class="layer-item-label">
+                <input type="checkbox" checked class="layer-toggle-cb" data-layer="layer-sublead">
+                <span>✥ Sub-lead Description</span>
+              </label>
+              <button type="button" class="btn-row-delete" data-layer="layer-sublead" title="Delete element">✕</button>
+            </div>
+
+            <div class="layer-item-row" data-target="layer-chips">
+              <label class="layer-item-label">
+                <input type="checkbox" checked class="layer-toggle-cb" data-layer="layer-chips">
+                <span>✥ Telemetry / Feature Chips</span>
+              </label>
+              <button type="button" class="btn-row-delete" data-layer="layer-chips" title="Delete element">✕</button>
+            </div>
+
+            <div class="layer-item-row" data-target="layer-terminal">
+              <label class="layer-item-label">
+                <input type="checkbox" checked class="layer-toggle-cb" data-layer="layer-terminal">
+                <span>✥ Terminal CTA Badge</span>
+              </label>
+              <button type="button" class="btn-row-delete" data-layer="layer-terminal" title="Delete element">✕</button>
+            </div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-top: 14px;">
+            <button type="button" id="restoreAllElementsBtn" class="btn btn-secondary btn-sm" style="flex: 1;">
+              ↺ Restore All
+            </button>
+            <button type="button" id="clearAllElementsBtn" class="btn btn-secondary btn-sm" style="color: #f87171;" title="Delete all elements for clean background">
+              ✕ Clear All
+            </button>
+          </div>
+        </div>
+
+        <!-- 4. Safe Zone Guides & Overlays Section -->
+        <div class="control-card">
+          <h2 class="section-title">
+            <span class="step-num">4</span> Safe Zone Guides
           </h2>
 
           <div class="switches-list">
@@ -651,10 +742,10 @@
           </div>
         </div>
 
-        <!-- 4. Export & Download Section -->
+        <!-- 5. Export & Download Section -->
         <div class="control-card">
           <h2 class="section-title">
-            <span class="step-num">4</span> Download
+            <span class="step-num">5</span> Download
           </h2>
 
           <div class="control-group">
