@@ -1109,15 +1109,15 @@ input[type="color"] {
 
 .layer-handle {
   position: absolute;
-  top: -24px;
+  top: -28px;
   left: 0;
-  background: rgba(8, 20, 36, 0.95);
-  border: 1px solid rgba(0, 210, 255, 0.5);
+  background: rgba(8, 20, 36, 0.96);
+  border: 1px solid rgba(0, 210, 255, 0.6);
   color: #ffffff;
   font-size: 11px;
   font-family: inherit;
-  font-weight: 600;
-  padding: 2px 6px;
+  font-weight: 700;
+  padding: 3px 8px;
   border-radius: 4px;
   opacity: 0;
   transition: opacity 0.15s ease;
@@ -1125,9 +1125,20 @@ input[type="color"] {
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 8px;
-  z-index: 105;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  gap: 10px;
+  z-index: 115;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+}
+
+/* Invisible bridge so cursor never drops hover when moving from layer to handle */
+.layer-handle::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 14px;
+  pointer-events: auto;
 }
 
 .layer-handle .handle-title {
@@ -1136,28 +1147,62 @@ input[type="color"] {
 }
 
 .btn-layer-delete {
-  background: rgba(239, 68, 68, 0.25);
-  border: 1px solid rgba(239, 68, 68, 0.6);
-  color: #fca5a5;
-  width: 17px;
-  height: 17px;
-  border-radius: 3px;
+  background: #ef4444;
+  border: 1.5px solid #ffffff;
+  color: #ffffff;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 11px;
-  font-weight: bold;
+  font-weight: 900;
   line-height: 1;
   padding: 0;
-  transition: all 0.15s ease;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
 }
 
 .btn-layer-delete:hover {
+  background: #dc2626;
+  transform: scale(1.25);
+}
+
+/* Corner Delete Button directly on top-right of each section */
+.moveable-layer .layer-corner-del {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 22px;
+  height: 22px;
   background: #ef4444;
+  border: 2px solid #ffffff;
   color: #ffffff;
-  border-color: #ef4444;
-  transform: scale(1.15);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+  z-index: 125;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: auto;
+}
+
+.moveable-layer:hover .layer-corner-del,
+.moveable-layer.selected .layer-corner-del {
+  opacity: 1;
+}
+
+.moveable-layer .layer-corner-del:hover {
+  background: #dc2626;
+  transform: scale(1.25);
 }
 
 .moveable-layer:hover .layer-handle,

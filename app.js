@@ -1142,18 +1142,27 @@
         selectedLayer = layer;
       });
 
-      // Delete button on layer handle
-      const delBtn = layer.querySelector('.btn-layer-delete');
-      if (delBtn) {
+      // Delete buttons on layer handle and corner
+      layer.querySelectorAll('.btn-layer-delete').forEach(delBtn => {
+        delBtn.addEventListener('pointerdown', (e) => {
+          e.stopPropagation();
+        });
+        delBtn.addEventListener('mousedown', (e) => {
+          e.stopPropagation();
+        });
         delBtn.addEventListener('click', (e) => {
+          e.preventDefault();
           e.stopPropagation();
           deleteLayer(layer);
         });
-      }
+      });
 
       layer.addEventListener('pointerdown', (e) => {
         if (e.button !== 0) return;
-        if (e.target.closest('.btn-layer-delete')) return;
+        if (e.target.closest('.btn-layer-delete')) {
+          e.stopPropagation();
+          return;
+        }
         e.stopPropagation();
         isDraggingLayer = true;
         layer.classList.add('dragging');
@@ -1551,6 +1560,10 @@
     wrapper.addEventListener('pointerdown', (e) => {
       // Primary button only
       if (e.button !== 0) return;
+      // Do NOT start canvas drag if clicking on an interactive layer or delete button!
+      if (e.target.closest('.moveable-layer') || e.target.closest('.btn-layer-delete') || e.target.closest('.layer-handle')) {
+        return;
+      }
       state.isDragging = true;
       wrapper.classList.add('dragging');
       wrapper.setPointerCapture(e.pointerId);
