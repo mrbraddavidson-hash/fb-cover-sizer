@@ -65,8 +65,9 @@
     </div>
   </header>
 
+  <!-- CLEAN TWO-COLUMN STUDIO LAYOUT: SIDEBAR ON LEFT, CANVAS ON RIGHT -->
   <main class="app-layout">
-    <!-- LEFT SIDEBAR: CONTROLS & SETTINGS -->
+    <!-- LEFT SIDEBAR: ALL CONTROLS (Uploads, Sizing, Guides, Download) -->
     <aside class="sidebar-controls" aria-label="Controls and adjustments">
       
       <!-- 1. Upload & AI Image Generation Section -->
@@ -103,7 +104,6 @@
           <div class="sample-picker">
             <span class="sample-label">Or try a preset sample:</span>
             <div class="sample-buttons">
-              <button type="button" class="btn-chip" data-sample="ai-generated" style="border-color: #38bdf8; color: #38bdf8; font-weight: 600;">⭐ Latest AI Cover</button>
               <button type="button" class="btn-chip" data-sample="business">🏢 Business</button>
               <button type="button" class="btn-chip" data-sample="nature">🌄 Nature</button>
               <button type="button" class="btn-chip" data-sample="creative">🎨 Creative</button>
@@ -148,64 +148,9 @@
             <p id="aiStatusText" class="ai-status-text">Free unlimited generation • No API key required</p>
           </div>
         </div>
-
-        <!-- 🧪 Live Test Area Under Uploads -->
-        <div class="test-area-box" id="testAreaBox">
-          <div class="test-area-header">
-            <span class="test-badge">🧪 Test Area</span>
-            <span class="test-subtitle">Avatar & Device Preview</span>
-          </div>
-
-          <!-- Avatar / Profile Picture Test Overlay -->
-          <div class="control-group">
-            <label for="avatarModeSelect">Avatar / Profile Picture Overlay</label>
-            <select id="avatarModeSelect" class="form-select">
-              <option value="both" selected>👤 Both Personal (Mobile Center & Desktop Left)</option>
-              <option value="desktop">💻 Desktop PC Layout Only (Left-aligned overlap)</option>
-              <option value="mobile">📱 Mobile Smartphone Only (Center-bottom overlap)</option>
-              <option value="none">🚫 Hide Profile Photo Overlays</option>
-            </select>
-          </div>
-
-          <!-- Upload Profile Pic to test live overlap -->
-          <div class="avatar-upload-group" id="avatarUploadGroup">
-            <div class="control-label-row">
-              <label>Preview Your Own Profile Photo</label>
-              <span class="text-muted text-xs">Optional</span>
-            </div>
-            <div class="avatar-upload-row">
-              <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/webp" class="hidden">
-              <button type="button" id="uploadAvatarBtn" class="btn btn-secondary btn-sm">
-                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <circle cx="12" cy="8" r="4"></circle>
-                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>
-                  <line x1="19" y1="8" x2="19" y2="14"></line>
-                  <line x1="22" y1="11" x2="16" y2="11"></line>
-                </svg>
-                Upload Profile Pic
-              </button>
-              <div id="avatarThumbPreview" class="avatar-thumb-box hidden">
-                <img id="avatarThumbImg" alt="Profile Thumbnail" src="">
-                <button type="button" id="removeAvatarBtn" class="btn-remove-thumb" title="Remove custom avatar">✕</button>
-              </div>
-            </div>
-            <p class="control-hint">Shows how your real face or logo will overlap your cover.</p>
-          </div>
-
-          <!-- Instant Simulator Test Switcher -->
-          <div class="device-test-row">
-            <span class="device-test-label">Instant Device Test:</span>
-            <div class="device-test-buttons">
-              <button type="button" class="btn-device-test" data-test-tab="editor" title="Back to canvas editor">🎨 Editor</button>
-              <button type="button" class="btn-device-test" data-test-tab="desktop" title="PC Desktop simulation">💻 PC</button>
-              <button type="button" class="btn-device-test" data-test-tab="mobile" title="Mobile phone simulation">📱 Mobile</button>
-              <button type="button" class="btn-device-test" data-test-tab="dual" title="Side-by-side comparison">⚡ Dual</button>
-            </div>
-          </div>
-        </div>
       </section>
 
-      <!-- 2. Canvas & Transform Controls -->
+      <!-- 2. Sizing & Transform Controls -->
       <section class="panel-section">
         <h2 class="section-title">
           <span class="step-num">2</span> Sizing & Alignment
@@ -337,6 +282,17 @@
           </label>
         </div>
 
+        <!-- Avatar silhouette -->
+        <div class="control-group">
+          <label for="avatarModeSelect">Avatar / Profile Picture Overlay</label>
+          <select id="avatarModeSelect" class="form-select">
+            <option value="none" selected>🚫 Clean View (No Profile Overlays)</option>
+            <option value="both">👤 Show Desktop & Mobile Avatar Positions</option>
+            <option value="personal">👤 Desktop Left Avatar Only</option>
+            <option value="page">🏢 Mobile Center Avatar Only</option>
+          </select>
+        </div>
+
         <div class="control-group">
           <div class="control-label-row">
             <label for="overlayOpacitySlider">Guide Opacity</label>
@@ -397,7 +353,7 @@
 
     </aside>
 
-    <!-- RIGHT MAIN WORKSPACE: CANVAS & DEVICE PREVIEWS -->
+    <!-- RIGHT MAIN WORKSPACE: CANVAS & DEVICE PREVIEWS (CLEAN, ZERO CLUTTER ON TOP) -->
     <section class="main-workspace" aria-label="Editor and previews">
       
       <!-- Top Navigation Tabs -->

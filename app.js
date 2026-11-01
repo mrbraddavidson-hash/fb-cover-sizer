@@ -44,7 +44,7 @@
       desktopCrop: true,
       mobileCrop: true,
       ruleOfThirds: false,
-      avatarMode: 'both', // 'both' | 'desktop' | 'mobile' | 'none'
+      avatarMode: 'none', // 'none' by default for clean view
       opacity: 0.65
     },
     avatarImage: null,
@@ -65,10 +65,12 @@
 
   // --- DOM Elements ---
   const elements = {
-    // Canvases
+    // Canvases & Overlays
     bgCanvas: document.getElementById('bgCanvas'),
     mainCanvas: document.getElementById('mainCanvas'),
     guideCanvas: document.getElementById('guideCanvas'),
+    layersOverlay: document.getElementById('layersOverlay'),
+    resetLayersBtn: document.getElementById('resetLayersBtn'),
     canvasWrapper: document.getElementById('canvasWrapper'),
     canvasContainer: document.getElementById('canvasContainer'),
 
@@ -156,7 +158,9 @@
     guideModal: document.getElementById('guideModal'),
     closeModalBtn: document.getElementById('closeModalBtn'),
     gotItBtn: document.getElementById('gotItBtn'),
-    toast: document.getElementById('toast')
+    toast: document.getElementById('toast'),
+    layersOverlay: document.getElementById('layersOverlay'),
+    resetLayersBtn: document.getElementById('resetLayersBtn')
   };
 
   // Get contexts
@@ -178,12 +182,30 @@
   // --- Initial Setup & Sample Image Generator ---
   function init() {
     setupEventListeners();
+    setupLayerDragging();
     setupSimulatorCanvases();
-    loadSampleImage('business');
+    loadSampleImage('davidson');
   }
 
   // Generate procedural sample images so the user sees a rich design immediately
   function loadSampleImage(type) {
+    if (type === 'davidson') {
+      const img = new Image();
+      img.onload = () => {
+        setImage(img);
+        if (elements.layersOverlay) elements.layersOverlay.classList.remove('hidden');
+        showToast('Loaded Davidson Digital Design — all sections are moveable!');
+      };
+      img.onerror = () => {
+        showToast('Could not load Davidson background, falling back to business preset');
+        loadSampleImage('business');
+      };
+      img.src = 'cyber_background.png?t=' + Date.now();
+      return;
+    }
+
+    if (elements.layersOverlay) elements.layersOverlay.classList.add('hidden');
+
     if (type === 'ai-generated') {
       const img = new Image();
       img.onload = () => {
@@ -229,28 +251,28 @@
       ctx.fillStyle = glowGrad;
       ctx.fillRect(0, 0, 1640, 720);
 
-      // Core typography placed strategically in the Safe Zone!
+      // Core typography placed strategically in the Safe Zone (High enough to avoid all avatar overlaps!)
       ctx.fillStyle = '#ffffff';
       ctx.font = '800 58px Inter, sans-serif';
-      ctx.fillText('NEXUS CREATIVE LAB', 300, 330);
+      ctx.fillText('NEXUS CREATIVE LAB', 300, 230);
 
       ctx.fillStyle = '#38bdf8';
       ctx.font = '600 28px Inter, sans-serif';
-      ctx.fillText('Digital Products & Strategic Growth', 300, 380);
+      ctx.fillText('Digital Products & Strategic Growth', 300, 280);
 
       ctx.fillStyle = '#94a3b8';
       ctx.font = '400 22px Inter, sans-serif';
-      ctx.fillText('Safe Zone Guaranteed: Perfectly positioned for Mobile & PC', 300, 425);
+      ctx.fillText('Safe Zone Guaranteed: Perfectly positioned for Mobile & PC', 300, 325);
 
       // Button badge mockup
       ctx.fillStyle = '#1877F2';
       ctx.beginPath();
-      ctx.roundRect(300, 460, 210, 52, 26);
+      ctx.roundRect(300, 365, 210, 52, 26);
       ctx.fill();
 
       ctx.fillStyle = '#ffffff';
       ctx.font = '700 20px Inter, sans-serif';
-      ctx.fillText('Visit Website →', 330, 493);
+      ctx.fillText('Visit Website →', 330, 398);
 
     } else if (type === 'nature') {
       // Scenic Sunset Landscape
@@ -346,8 +368,9 @@
       const scale = Math.min(CANVAS_WIDTH / imgW, CANVAS_HEIGHT / imgH);
       return { w: imgW * scale, h: imgH * scale };
     } else if (state.fitMode === 'safe') {
-      // Scales so 100% of the photo fits inside the 1280x624 Universal Safe Zone
-      const scale = Math.min(SAFE_ZONE.width / imgW, SAFE_ZONE.height / imgH);
+      // Scales so photo fits inside the 1280px wide zone and above the 2 profile avatar circles (height ~410px)
+      const avatarClearHeight = 410; // clears Desktop (Y=455) and Mobile (Y=470) circles
+      const scale = Math.min(SAFE_ZONE.width / imgW, avatarClearHeight / imgH);
       return { w: imgW * scale, h: imgH * scale };
     } else {
       // 'cover': fills the 1640x720 canvas completely
@@ -385,9 +408,6 @@
       setFitMode('contain', false);
     }
 
-    state.zoom = 1.0;
-    state.x = CANVAS_WIDTH / 2;
-    state.y = CANVAS_HEIGHT / 2;
     updateZoomSlider();
     renderAll();
     syncPreviews();
@@ -397,7 +417,8 @@
     state.fitMode = mode;
     state.zoom = 1.0;
     state.x = CANVAS_WIDTH / 2;
-    state.y = CANVAS_HEIGHT / 2;
+    // Elevate to Y=260 in safe mode so the image is centered above the 2 profile avatar circles
+    state.y = mode === 'safe' ? 260 : CANVAS_HEIGHT / 2;
 
     // Update active button state
     if (elements.fitContainBtn) elements.fitContainBtn.classList.toggle('active', mode === 'contain');
@@ -684,42 +705,45 @@
         );
       }
     }
+    syncPreviews();
   }
 
-  // Draw enhanced avatar guide with vector silhouette or uploaded image
+  // Draw clean profile circle overlay without any floating badges or text over it
   function drawAvatarGuide(ctx, x, y, r, label, color, subtitle) {
     ctx.save();
 
-    // Semi-transparent backdrop shadow
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 18;
+    // Subtle drop shadow matching realistic Facebook avatar
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+    ctx.shadowBlur = 12;
+    ctx.shadowOffsetY = 4;
 
     // Outer circular boundary fill
     ctx.beginPath();
     ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
     ctx.fill();
 
-    // Crisp high-contrast border
+    // Crisp high-contrast avatar border (like Facebook's real white border)
     ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
     ctx.lineWidth = 4;
-    ctx.strokeStyle = color;
+    ctx.strokeStyle = '#ffffff';
     ctx.stroke();
 
-    // Inner dashed guide line
+    // Inner subtle guide ring
     ctx.setLineDash([6, 6]);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = color || 'rgba(255, 255, 255, 0.7)';
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(x, y, r - 6, 0, Math.PI * 2);
+    ctx.arc(x, y, r - 5, 0, Math.PI * 2);
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Custom avatar image OR silhouette icon
+    // Custom avatar image OR clean silhouette icon inside circle
     if (state.avatarLoaded && state.avatarImage) {
       ctx.save();
       ctx.beginPath();
-      ctx.arc(x, y, r - 3, 0, Math.PI * 2);
+      ctx.arc(x, y, r - 4, 0, Math.PI * 2);
       ctx.clip();
       const img = state.avatarImage;
       const minSide = Math.min(img.width, img.height);
@@ -728,13 +752,12 @@
       ctx.drawImage(img, sx, sy, minSide, minSide, x - r, y - r, r * 2, r * 2);
       ctx.restore();
     } else {
-      // Silhouette icon
-      // Head
+      // Clean silhouette icon inside circle
       const headR = r * 0.32;
       const headY = y - r * 0.16;
       ctx.beginPath();
       ctx.arc(x, headY, headR, 0, Math.PI * 2);
-      ctx.fillStyle = color;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
       ctx.fill();
 
       // Shoulders / chest
@@ -746,33 +769,9 @@
       ctx.quadraticCurveTo(x - bodyW * 0.7, bodyTop, x, bodyTop);
       ctx.quadraticCurveTo(x + bodyW * 0.7, bodyTop, x + bodyW, bodyBottom);
       ctx.closePath();
-      ctx.fillStyle = color;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
       ctx.fill();
     }
-
-    // High-visibility badge pill above avatar
-    const badgeW = 270;
-    const badgeH = 46;
-    const badgeX = x - badgeW / 2;
-    const badgeY = y - r - badgeH - 12;
-
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 8);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 16px Inter, system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(label, x, badgeY + 16);
-
-    ctx.fillStyle = '#cbd5e1';
-    ctx.font = '500 12px Inter, system-ui, sans-serif';
-    ctx.fillText(subtitle, x, badgeY + 33);
 
     ctx.restore();
   }
@@ -816,8 +815,260 @@
     elements.dualMobileCanvas.height = CANVAS_HEIGHT;
   }
 
+  const emblemImg = new Image();
+  emblemImg.src = 'assets/emblem_clean_alpha.png';
+
+  // Draw moveable text, logo, and telemetry layers on any canvas context
+  function drawMoveableLayers(ctx) {
+    if (!elements.layersOverlay || elements.layersOverlay.classList.contains('hidden')) return;
+
+    // 1. Emblem & Brand Title
+    const emblemEl = document.getElementById('layer-emblem');
+    if (emblemEl) {
+      const x = parseInt(emblemEl.dataset.x, 10) || 210;
+      const y = parseInt(emblemEl.dataset.y, 10) || 70;
+      if (emblemImg.complete && emblemImg.naturalWidth > 0) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 210, 255, 0.7)';
+        ctx.shadowBlur = 16;
+        ctx.drawImage(emblemImg, x, y, 64, 64);
+        ctx.restore();
+      }
+      ctx.save();
+      ctx.font = '800 28px Bahnschrift, "Segoe UI", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('DAVIDSON ', x + 82, y + 38);
+      const dw = ctx.measureText('DAVIDSON ').width;
+      ctx.fillStyle = '#00d2ff';
+      ctx.fillText('DIGITAL DESIGN', x + 82 + dw, y + 38);
+
+      ctx.font = '600 13px "JetBrains Mono", Consolas, monospace';
+      ctx.fillStyle = '#b9cde1';
+      ctx.fillText('LOCAL WEBSITES • SIMPLE AI • HONEST SERVICE', x + 82, y + 58);
+      ctx.restore();
+    }
+
+    // 2. Top-Right HUD Module
+    const hudEl = document.getElementById('layer-hud');
+    if (hudEl) {
+      const x = parseInt(hudEl.dataset.x, 10) || 1040;
+      const y = parseInt(hudEl.dataset.y, 10) || 64;
+      const w = 390;
+      const h = 72;
+      ctx.save();
+      ctx.fillStyle = 'rgba(8, 16, 28, 0.9)';
+      ctx.strokeStyle = 'rgba(0, 210, 255, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#10b981';
+      ctx.beginPath();
+      ctx.arc(x + 18, y + 26, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.font = '600 13px "JetBrains Mono", Consolas, monospace';
+      ctx.fillStyle = '#00d2ff';
+      ctx.fillText('SYS_STATUS: ONLINE // PERTH NODE', x + 30, y + 30);
+
+      ctx.font = '500 12px "JetBrains Mono", Consolas, monospace';
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillText('LISTOWEL, ONTARIO', x + 16, y + 54);
+      ctx.fillStyle = '#a855f7';
+      ctx.fillText('RTT: 12ms', x + 300, y + 54);
+      ctx.restore();
+    }
+
+    // 3. Headline
+    const hlEl = document.getElementById('layer-headline');
+    if (hlEl) {
+      const x = parseInt(hlEl.dataset.x, 10) || 210;
+      const y = parseInt(hlEl.dataset.y, 10) || 140;
+      ctx.save();
+      ctx.font = '600 13px "JetBrains Mono", Consolas, monospace';
+      ctx.fillStyle = '#00d2ff';
+      ctx.fillText('[ 01 // ARCHITECTURE & INTELLIGENCE ]', x, y + 14);
+
+      ctx.font = '800 36px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('High-Performance Web Platforms.', x, y + 54);
+      ctx.fillStyle = '#00beff';
+      ctx.fillText('Autonomous AI Systems.', x, y + 96);
+      ctx.restore();
+    }
+
+    // 4. Sub-lead
+    const subEl = document.getElementById('layer-sublead');
+    if (subEl) {
+      const x = parseInt(subEl.dataset.x, 10) || 210;
+      const y = parseInt(subEl.dataset.y, 10) || 278;
+      ctx.save();
+      ctx.font = '400 18px "Segoe UI", sans-serif';
+      ctx.fillStyle = '#cde0f0';
+      ctx.fillText('Engineered for pure speed, local organic dominance, and automated lead workflows.', x, y + 18);
+      ctx.restore();
+    }
+
+    // 5. Telemetry Chips
+    const chipsEl = document.getElementById('layer-chips');
+    if (chipsEl) {
+      const startX = parseInt(chipsEl.dataset.x, 10) || 210;
+      const y = parseInt(chipsEl.dataset.y, 10) || 335;
+      const chips = [
+        { tag: '⚡ 99+ SPEED', detail: 'Zero bloat · Sub-second TTFB', col: '#00e6ff', border: 'rgba(0, 210, 255, 0.45)', bg: 'rgba(10, 22, 38, 0.9)' },
+        { tag: '🤖 CUSTOM AI', detail: 'Autonomous workflows & bots', col: '#c084fc', border: 'rgba(168, 85, 247, 0.45)', bg: 'rgba(20, 14, 38, 0.9)' },
+        { tag: '🎯 LOCAL RANK', detail: 'Top 3-Pack SEO in Perth & Minto', col: '#ffffff', border: 'rgba(0, 210, 255, 0.35)', bg: 'rgba(10, 18, 30, 0.9)' }
+      ];
+      const chipW = 270;
+      const chipH = 58;
+      chips.forEach((c, i) => {
+        const cx = startX + i * (chipW + 14);
+        ctx.save();
+        ctx.fillStyle = c.bg;
+        ctx.strokeStyle = c.border;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.roundRect(cx, y, chipW, chipH, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = c.col;
+        ctx.fillRect(cx + 3, y + 6, 3, chipH - 12);
+
+        ctx.font = '700 13px "JetBrains Mono", Consolas, monospace';
+        ctx.fillStyle = c.col;
+        ctx.fillText(c.tag, cx + 14, y + 24);
+
+        ctx.font = '500 11px "JetBrains Mono", Consolas, monospace';
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(c.detail, cx + 14, y + 44);
+        ctx.restore();
+      });
+    }
+
+    // 6. Terminal Module
+    const termEl = document.getElementById('layer-terminal');
+    if (termEl) {
+      const x = parseInt(termEl.dataset.x, 10) || 1090;
+      const y = parseInt(termEl.dataset.y, 10) || 330;
+      const w = 340;
+      const h = 64;
+      ctx.save();
+      ctx.fillStyle = 'rgba(8, 14, 25, 0.95)';
+      ctx.strokeStyle = 'rgba(0, 210, 255, 0.55)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.font = '600 11px "JetBrains Mono", Consolas, monospace';
+      ctx.fillStyle = '#00b4ff';
+      ctx.fillText('root@davidson:~$ ./init_project', x + 14, y + 22);
+
+      ctx.font = '700 16px "JetBrains Mono", Consolas, monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('davidsondigitaldesign.com', x + 14, y + 46);
+
+      const curX = x + 14 + ctx.measureText('davidsondigitaldesign.com').width + 4;
+      ctx.fillStyle = '#00dcff';
+      ctx.fillRect(curX, y + 33, 8, 15);
+      ctx.restore();
+    }
+  }
+
+  // Interactive Drag & Drop for all Moveable Layers
+  function setupLayerDragging() {
+    const layers = document.querySelectorAll('.moveable-layer');
+    layers.forEach(layer => {
+      let isDraggingLayer = false;
+      let startClientX = 0;
+      let startClientY = 0;
+      let startX = 0;
+      let startY = 0;
+
+      layer.addEventListener('pointerdown', (e) => {
+        if (e.button !== 0) return;
+        e.stopPropagation();
+        isDraggingLayer = true;
+        layer.classList.add('dragging');
+
+        startClientX = e.clientX;
+        startClientY = e.clientY;
+        startX = parseInt(layer.dataset.x, 10) || 0;
+        startY = parseInt(layer.dataset.y, 10) || 0;
+
+        try {
+          layer.setPointerCapture(e.pointerId);
+        } catch (_) {}
+      });
+
+      layer.addEventListener('pointermove', (e) => {
+        if (!isDraggingLayer) return;
+        const wrapper = elements.canvasWrapper;
+        const rect = wrapper.getBoundingClientRect();
+        const scale = rect.width / CANVAS_WIDTH;
+
+        const dx = (e.clientX - startClientX) / scale;
+        const dy = (e.clientY - startClientY) / scale;
+
+        const newX = Math.round(startX + dx);
+        const newY = Math.round(startY + dy);
+
+        layer.dataset.x = newX;
+        layer.dataset.y = newY;
+        layer.style.left = (newX / CANVAS_WIDTH * 100) + '%';
+        layer.style.top = (newY / CANVAS_HEIGHT * 100) + '%';
+
+        syncPreviews();
+      });
+
+      const stopLayerDrag = (e) => {
+        if (isDraggingLayer) {
+          isDraggingLayer = false;
+          layer.classList.remove('dragging');
+          try {
+            if (layer.hasPointerCapture(e.pointerId)) {
+              layer.releasePointerCapture(e.pointerId);
+            }
+          } catch (_) {}
+          syncPreviews();
+        }
+      };
+
+      layer.addEventListener('pointerup', stopLayerDrag);
+      layer.addEventListener('pointercancel', stopLayerDrag);
+    });
+
+    if (elements.resetLayersBtn) {
+      elements.resetLayersBtn.addEventListener('click', () => {
+        const defaults = {
+          'layer-emblem': { x: 210, y: 68 },
+          'layer-hud': { x: 1040, y: 64 },
+          'layer-headline': { x: 210, y: 140 },
+          'layer-sublead': { x: 210, y: 278 },
+          'layer-chips': { x: 210, y: 335 },
+          'layer-terminal': { x: 1090, y: 330 }
+        };
+        Object.entries(defaults).forEach(([id, coords]) => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.dataset.x = coords.x;
+            el.dataset.y = coords.y;
+            el.style.left = (coords.x / CANVAS_WIDTH * 100) + '%';
+            el.style.top = (coords.y / CANVAS_HEIGHT * 100) + '%';
+          }
+        });
+        syncPreviews();
+        showToast('All sections reset to default positions');
+      });
+    }
+  }
+
   function syncPreviews() {
-    // 1. Generate full composite (bg + main) without guides
+    // 1. Generate full composite (bg + main + moveable layers)
     const compositeCanvas = document.createElement('canvas');
     compositeCanvas.width = CANVAS_WIDTH;
     compositeCanvas.height = CANVAS_HEIGHT;
@@ -825,6 +1076,9 @@
 
     compCtx.drawImage(elements.bgCanvas, 0, 0);
     compCtx.drawImage(elements.mainCanvas, 0, 0);
+    drawMoveableLayers(compCtx);
+
+    const opacity = state.guides.opacity;
 
     // 2. Desktop Preview: crop top 48px, height 624px
     const dCtx = elements.desktopPreviewCanvas.getContext('2d');
@@ -835,6 +1089,82 @@
       0, 0, CANVAS_WIDTH, DESKTOP_VISIBLE_HEIGHT
     );
 
+    // Overlay Safe Zone & Cutoffs on Desktop Preview
+    if (state.guides.safeZone) {
+      dCtx.save();
+      // Mobile cutoff side strips (0..180 and 1460..1640)
+      if (state.guides.mobileCrop) {
+        drawStripedZone(dCtx, 0, 0, MOBILE_CROP_SIDE, DESKTOP_VISIBLE_HEIGHT, 'rgba(6, 182, 212, ' + (opacity * 0.4) + ')', 'rgba(6, 182, 212, ' + (opacity * 0.8) + ')');
+        drawStripedZone(dCtx, CANVAS_WIDTH - MOBILE_CROP_SIDE, 0, MOBILE_CROP_SIDE, DESKTOP_VISIBLE_HEIGHT, 'rgba(6, 182, 212, ' + (opacity * 0.4) + ')', 'rgba(6, 182, 212, ' + (opacity * 0.8) + ')');
+        
+        dCtx.fillStyle = 'rgba(255, 255, 255, ' + Math.min(1, opacity + 0.35) + ')';
+        dCtx.font = '600 13px Inter, sans-serif';
+        dCtx.save();
+        dCtx.translate(90, DESKTOP_VISIBLE_HEIGHT / 2);
+        dCtx.rotate(-Math.PI / 2);
+        dCtx.textAlign = 'center';
+        dCtx.fillText('⚠️ CUT ON MOBILE (-180px)', 0, 0);
+        dCtx.restore();
+
+        dCtx.save();
+        dCtx.translate(CANVAS_WIDTH - 90, DESKTOP_VISIBLE_HEIGHT / 2);
+        dCtx.rotate(Math.PI / 2);
+        dCtx.textAlign = 'center';
+        dCtx.fillText('⚠️ CUT ON MOBILE (-180px)', 0, 0);
+        dCtx.restore();
+      }
+
+      // Universal Safe Zone Box
+      dCtx.strokeStyle = 'rgba(16, 185, 129, ' + opacity + ')';
+      dCtx.lineWidth = 3;
+      dCtx.setLineDash([12, 8]);
+      dCtx.strokeRect(MOBILE_CROP_SIDE, 0, MOBILE_VISIBLE_WIDTH, DESKTOP_VISIBLE_HEIGHT);
+
+      // Corner brackets
+      dCtx.setLineDash([]);
+      dCtx.lineWidth = 5;
+      const bLen = 28;
+      // Top-Left
+      dCtx.beginPath();
+      dCtx.moveTo(MOBILE_CROP_SIDE, bLen);
+      dCtx.lineTo(MOBILE_CROP_SIDE, 0);
+      dCtx.lineTo(MOBILE_CROP_SIDE + bLen, 0);
+      dCtx.stroke();
+      // Top-Right
+      dCtx.beginPath();
+      dCtx.moveTo(MOBILE_CROP_SIDE + MOBILE_VISIBLE_WIDTH - bLen, 0);
+      dCtx.lineTo(MOBILE_CROP_SIDE + MOBILE_VISIBLE_WIDTH, 0);
+      dCtx.lineTo(MOBILE_CROP_SIDE + MOBILE_VISIBLE_WIDTH, bLen);
+      dCtx.stroke();
+      // Bottom-Left
+      dCtx.beginPath();
+      dCtx.moveTo(MOBILE_CROP_SIDE, DESKTOP_VISIBLE_HEIGHT - bLen);
+      dCtx.lineTo(MOBILE_CROP_SIDE, DESKTOP_VISIBLE_HEIGHT);
+      dCtx.lineTo(MOBILE_CROP_SIDE + bLen, DESKTOP_VISIBLE_HEIGHT);
+      dCtx.stroke();
+      // Bottom-Right
+      dCtx.beginPath();
+      dCtx.moveTo(MOBILE_CROP_SIDE + MOBILE_VISIBLE_WIDTH - bLen, DESKTOP_VISIBLE_HEIGHT);
+      dCtx.lineTo(MOBILE_CROP_SIDE + MOBILE_VISIBLE_WIDTH, DESKTOP_VISIBLE_HEIGHT);
+      dCtx.lineTo(MOBILE_CROP_SIDE + MOBILE_VISIBLE_WIDTH, DESKTOP_VISIBLE_HEIGHT - bLen);
+      dCtx.stroke();
+
+      // Top center badge
+      const bText = '✨ UNIVERSAL SAFE ZONE (1280 × 624 px) — Visible Everywhere';
+      dCtx.font = '700 13px Inter, sans-serif';
+      const tW = dCtx.measureText(bText).width;
+      const bX = (CANVAS_WIDTH - tW - 28) / 2;
+      dCtx.fillStyle = 'rgba(16, 185, 129, ' + (opacity * 0.95) + ')';
+      dCtx.beginPath();
+      dCtx.roundRect(bX, 10, tW + 28, 26, 13);
+      dCtx.fill();
+      dCtx.fillStyle = '#ffffff';
+      dCtx.textAlign = 'center';
+      dCtx.fillText(bText, CANVAS_WIDTH / 2, 27);
+
+      dCtx.restore();
+    }
+
     // 3. Mobile Preview: crop sides 180px, width 1280px
     const mCtx = elements.mobilePreviewCanvas.getContext('2d');
     mCtx.clearRect(0, 0, MOBILE_VISIBLE_WIDTH, CANVAS_HEIGHT);
@@ -843,6 +1173,72 @@
       MOBILE_CROP_SIDE, 0, MOBILE_VISIBLE_WIDTH, CANVAS_HEIGHT,
       0, 0, MOBILE_VISIBLE_WIDTH, CANVAS_HEIGHT
     );
+
+    // Overlay Safe Zone & Cutoffs on Mobile Preview
+    if (state.guides.safeZone) {
+      mCtx.save();
+      // Desktop cutoff top & bottom strips (0..48 and 672..720)
+      if (state.guides.desktopCrop) {
+        drawStripedZone(mCtx, 0, 0, MOBILE_VISIBLE_WIDTH, DESKTOP_CROP_TOP, 'rgba(245, 158, 11, ' + (opacity * 0.4) + ')', 'rgba(245, 158, 11, ' + (opacity * 0.8) + ')');
+        drawStripedZone(mCtx, 0, CANVAS_HEIGHT - DESKTOP_CROP_TOP, MOBILE_VISIBLE_WIDTH, DESKTOP_CROP_TOP, 'rgba(245, 158, 11, ' + (opacity * 0.4) + ')', 'rgba(245, 158, 11, ' + (opacity * 0.8) + ')');
+        
+        mCtx.fillStyle = 'rgba(255, 255, 255, ' + Math.min(1, opacity + 0.35) + ')';
+        mCtx.font = '600 13px Inter, sans-serif';
+        mCtx.textAlign = 'center';
+        mCtx.fillText('⚠️ CUT ON PC (TOP -48px)', MOBILE_VISIBLE_WIDTH / 2, 30);
+        mCtx.fillText('⚠️ CUT ON PC (BOTTOM -48px)', MOBILE_VISIBLE_WIDTH / 2, CANVAS_HEIGHT - 16);
+      }
+
+      // Universal Safe Zone Box on Mobile (x: 0..1280, y: 48..672)
+      mCtx.strokeStyle = 'rgba(16, 185, 129, ' + opacity + ')';
+      mCtx.lineWidth = 3;
+      mCtx.setLineDash([12, 8]);
+      mCtx.strokeRect(0, DESKTOP_CROP_TOP, MOBILE_VISIBLE_WIDTH, DESKTOP_VISIBLE_HEIGHT);
+
+      // Corner brackets
+      mCtx.setLineDash([]);
+      mCtx.lineWidth = 5;
+      const bLen = 28;
+      // Top-Left
+      mCtx.beginPath();
+      mCtx.moveTo(0, DESKTOP_CROP_TOP + bLen);
+      mCtx.lineTo(0, DESKTOP_CROP_TOP);
+      mCtx.lineTo(bLen, DESKTOP_CROP_TOP);
+      mCtx.stroke();
+      // Top-Right
+      mCtx.beginPath();
+      mCtx.moveTo(MOBILE_VISIBLE_WIDTH - bLen, DESKTOP_CROP_TOP);
+      mCtx.lineTo(MOBILE_VISIBLE_WIDTH, DESKTOP_CROP_TOP);
+      mCtx.lineTo(MOBILE_VISIBLE_WIDTH, DESKTOP_CROP_TOP + bLen);
+      mCtx.stroke();
+      // Bottom-Left
+      mCtx.beginPath();
+      mCtx.moveTo(0, DESKTOP_CROP_TOP + DESKTOP_VISIBLE_HEIGHT - bLen);
+      mCtx.lineTo(0, DESKTOP_CROP_TOP + DESKTOP_VISIBLE_HEIGHT);
+      mCtx.lineTo(bLen, DESKTOP_CROP_TOP + DESKTOP_VISIBLE_HEIGHT);
+      mCtx.stroke();
+      // Bottom-Right
+      mCtx.beginPath();
+      mCtx.moveTo(MOBILE_VISIBLE_WIDTH - bLen, DESKTOP_CROP_TOP + DESKTOP_VISIBLE_HEIGHT);
+      mCtx.lineTo(MOBILE_VISIBLE_WIDTH, DESKTOP_CROP_TOP + DESKTOP_VISIBLE_HEIGHT);
+      mCtx.lineTo(MOBILE_VISIBLE_WIDTH, DESKTOP_CROP_TOP + DESKTOP_VISIBLE_HEIGHT - bLen);
+      mCtx.stroke();
+
+      // Top center badge
+      const bText = '✨ UNIVERSAL SAFE ZONE (1280 × 624 px) — Visible Everywhere';
+      mCtx.font = '700 13px Inter, sans-serif';
+      const tW = mCtx.measureText(bText).width;
+      const bX = (MOBILE_VISIBLE_WIDTH - tW - 28) / 2;
+      mCtx.fillStyle = 'rgba(16, 185, 129, ' + (opacity * 0.95) + ')';
+      mCtx.beginPath();
+      mCtx.roundRect(bX, DESKTOP_CROP_TOP + 10, tW + 28, 26, 13);
+      mCtx.fill();
+      mCtx.fillStyle = '#ffffff';
+      mCtx.textAlign = 'center';
+      mCtx.fillText(bText, MOBILE_VISIBLE_WIDTH / 2, DESKTOP_CROP_TOP + 27);
+
+      mCtx.restore();
+    }
 
     // 4. Dual View previews
     const dualDCtx = elements.dualDesktopCanvas.getContext('2d');
@@ -880,8 +1276,15 @@
   // --- Transform Helpers ---
   function updateZoomSlider() {
     const pct = Math.round(state.zoom * 100);
-    elements.zoomSlider.value = Math.min(300, Math.max(30, pct));
-    elements.zoomVal.textContent = pct + '%';
+    const clampedPct = Math.min(300, Math.max(30, pct));
+    if (elements.zoomSlider) elements.zoomSlider.value = clampedPct;
+    if (elements.zoomVal) elements.zoomVal.textContent = pct + '%';
+    document.querySelectorAll('.zoom-range-input').forEach(slider => {
+      slider.value = clampedPct;
+    });
+    document.querySelectorAll('.zoom-val-badge').forEach(badge => {
+      badge.textContent = pct + '%';
+    });
   }
 
   // --- Pointer & Touch Dragging on Canvas ---
@@ -1009,7 +1412,7 @@
       showToast('Generating AI image, please wait ~3-5 seconds...');
 
       try {
-        const fullPrompt = `${userPrompt}, style: ${selectedStyle}, banner layout, high quality, 8k resolution, cinematic lighting, sharp details`;
+        const fullPrompt = `${userPrompt}, style: ${selectedStyle}, facebook cover banner format, all important subjects and text centered in upper two-thirds, clean dark lower third with empty bottom-left and empty bottom-center clear of graphics for profile avatars, high quality, 8k resolution, cinematic lighting, sharp details`;
         const randomSeed = Math.floor(Math.random() * 999999);
         const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=1640&height=720&nologo=true&seed=${randomSeed}`;
 
@@ -1023,8 +1426,9 @@
         });
 
         setImage(img);
-        elements.aiStatusText.textContent = '✨ Cover generated & placed on canvas!';
-        showToast('AI Cover generated successfully!');
+        setFitMode('safe');
+        elements.aiStatusText.textContent = '✨ Cover generated & aligned safely above avatars!';
+        showToast('AI Cover generated & aligned to clear profile circles!');
       } catch (err) {
         console.error(err);
         elements.aiStatusText.textContent = 'Generation failed. Please try again or rephrase prompt.';
@@ -1095,23 +1499,43 @@
       });
     });
 
-    // Zoom Controls
-    elements.zoomSlider.addEventListener('input', (e) => {
-      state.zoom = parseInt(e.target.value, 10) / 100;
-      elements.zoomVal.textContent = e.target.value + '%';
-      renderAll();
+    // Zoom Controls (Syncs both the bar under the Facebook demo and any sidebar controls)
+    document.querySelectorAll('.zoom-range-input').forEach(slider => {
+      slider.addEventListener('input', (e) => {
+        state.zoom = parseInt(e.target.value, 10) / 100;
+        updateZoomSlider();
+        renderAll();
+      });
     });
 
-    elements.zoomInBtn.addEventListener('click', () => {
-      state.zoom = Math.min(3.0, +(state.zoom + 0.1).toFixed(2));
-      updateZoomSlider();
-      renderAll();
+    document.querySelectorAll('.btn-zoom-in').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.zoom = Math.min(3.0, +(state.zoom + 0.1).toFixed(2));
+        updateZoomSlider();
+        renderAll();
+      });
     });
 
-    elements.zoomOutBtn.addEventListener('click', () => {
-      state.zoom = Math.max(0.3, +(state.zoom - 0.1).toFixed(2));
-      updateZoomSlider();
-      renderAll();
+    document.querySelectorAll('.btn-zoom-out').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.zoom = Math.max(0.3, +(state.zoom - 0.1).toFixed(2));
+        updateZoomSlider();
+        renderAll();
+      });
+    });
+
+    document.querySelectorAll('.btn-reset-view').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.zoom = 1.0;
+        state.x = CANVAS_WIDTH / 2;
+        state.y = CANVAS_HEIGHT / 2;
+        state.rotation = 0;
+        state.flipH = 1;
+        state.flipV = 1;
+        updateZoomSlider();
+        renderAll();
+        showToast('Reset zoom and centered position');
+      });
     });
 
     // Fit Mode buttons
@@ -1225,10 +1649,15 @@
       renderGuides();
     });
 
-    elements.avatarModeSelect.addEventListener('change', (e) => {
-      state.guides.avatarMode = e.target.value;
-      renderGuides();
-      syncPreviews();
+    document.querySelectorAll('.avatar-mode-sync').forEach(sel => {
+      sel.addEventListener('change', (e) => {
+        state.guides.avatarMode = e.target.value;
+        document.querySelectorAll('.avatar-mode-sync').forEach(s => {
+          if (s !== e.target) s.value = e.target.value;
+        });
+        renderGuides();
+        syncPreviews();
+      });
     });
 
     if (elements.uploadAvatarBtn && elements.avatarFileInput) {
@@ -1311,14 +1740,6 @@
       });
     });
 
-    // Device Test Quick Buttons under Uploads
-    document.querySelectorAll('.btn-device-test').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const targetTab = btn.getAttribute('data-test-tab');
-        switchTab(targetTab);
-      });
-    });
-
     // Theme toggle
     elements.themeToggleBtn.addEventListener('click', toggleTheme);
 
@@ -1360,10 +1781,6 @@
 
     elements.tabPanels.forEach(p => {
       p.classList.toggle('active', p.id === `panel-${tabId}`);
-    });
-
-    document.querySelectorAll('.btn-device-test').forEach(b => {
-      b.classList.toggle('active', b.getAttribute('data-test-tab') === tabId);
     });
 
     syncPreviews();
@@ -1418,6 +1835,7 @@
     const compCtx = compositeCanvas.getContext('2d');
     compCtx.drawImage(elements.bgCanvas, 0, 0);
     compCtx.drawImage(elements.mainCanvas, 0, 0);
+    drawMoveableLayers(compCtx);
 
     // Final output canvas
     const exportCanvas = document.createElement('canvas');
