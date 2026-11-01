@@ -1666,7 +1666,7 @@
       });
     });
 
-    // Generate AI Cover
+    // Generate AI Cover with Cloudflare Workers AI (100% Watermark-Free)
     elements.generateAiBtn.addEventListener('click', async () => {
       const userPrompt = elements.aiPromptInput.value.trim();
       if (!userPrompt) {
@@ -1678,71 +1678,50 @@
       // UI Loading state
       elements.generateAiBtn.disabled = true;
       elements.aiLoadingSpinner.classList.remove('hidden');
-      elements.aiStatusText.textContent = 'Generating high-res Facebook cover...';
-      showToast('Generating AI image, please wait ~3-5 seconds...');
+      elements.aiStatusText.textContent = 'Generating with Cloudflare Workers AI (FLUX.1 Schnell)...';
+      showToast('Generating AI image via Cloudflare Workers AI (~3-5s)...');
 
       try {
-        const fullPrompt = `${userPrompt}, style: ${selectedStyle}, facebook cover banner format, all important subjects and text centered in upper two-thirds, clean dark lower third with empty bottom-left and empty bottom-center clear of graphics for profile avatars, high quality, 8k resolution, cinematic lighting, sharp details`;
-        const randomSeed = Math.floor(Math.random() * 999999);
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?width=1640&height=720&nologo=true&seed=${randomSeed}`;
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const apiUrl = isLocal 
+          ? 'https://fb-cover-sizer.pages.dev/api/generate' 
+          : '/api/generate';
 
-        const rawImg = new Image();
-        rawImg.crossOrigin = 'anonymous';
+        const response = await fetch(apiUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            prompt: userPrompt,
+            style: selectedStyle
+          })
+        });
 
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `Server responded with ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+
+        const img = new Image();
         await new Promise((resolve, reject) => {
-          rawImg.onload = () => resolve();
-          rawImg.onerror = () => reject(new Error('Failed to load generated image'));
-          rawImg.src = imageUrl;
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('Failed to parse generated image blob'));
+          img.src = objectUrl;
         });
 
-        // --- AUTOMATIC WATERMARK REMOVER ---
-        // 1. Inpaint & erase the bottom-right watermark box using texture clone
-        const patchCanvas = document.createElement('canvas');
-        patchCanvas.width = rawImg.width;
-        patchCanvas.height = rawImg.height;
-        const pctx = patchCanvas.getContext('2d');
-        pctx.drawImage(rawImg, 0, 0);
-
-        const wmWidth = Math.min(220, Math.round(rawImg.width * 0.16));
-        const wmHeight = Math.min(50, Math.round(rawImg.height * 0.075));
-        const wmX = rawImg.width - wmWidth;
-        const wmY = rawImg.height - wmHeight;
-
-        // Clone clean pixels from immediately above the watermark
-        pctx.save();
-        pctx.filter = 'blur(1.5px)';
-        pctx.drawImage(
-          patchCanvas,
-          wmX, Math.max(0, wmY - wmHeight - 5), wmWidth, wmHeight,
-          wmX, wmY, wmWidth, wmHeight
-        );
-        pctx.restore();
-
-        // 2. Also crop out the bottom strip entirely onto the final 1640x720 canvas
-        const cleanCanvas = document.createElement('canvas');
-        cleanCanvas.width = CANVAS_WIDTH; // 1640
-        cleanCanvas.height = CANVAS_HEIGHT; // 720
-        const cctx = cleanCanvas.getContext('2d');
-        const cleanSourceH = Math.max(100, rawImg.height - wmHeight);
-        cctx.drawImage(
-          patchCanvas,
-          0, 0, rawImg.width, cleanSourceH,
-          0, 0, CANVAS_WIDTH, CANVAS_HEIGHT
-        );
-
-        const cleanImg = new Image();
-        await new Promise(r => {
-          cleanImg.onload = r;
-          cleanImg.src = cleanCanvas.toDataURL('image/png');
-        });
-
-        setImage(cleanImg);
+        setImage(img);
         setFitMode('safe');
-        elements.aiStatusText.textContent = '✨ Cover generated clean (100% watermark-free)!';
+        URL.revokeObjectURL(objectUrl);
+
+        elements.aiStatusText.textContent = '✨ 100% Watermark-Free Cover Generated with Cloudflare Workers AI!';
         showToast('AI Cover generated — 100% watermark-free!');
       } catch (err) {
-        console.error(err);
-        elements.aiStatusText.textContent = 'Generation failed. Please try again or rephrase prompt.';
+        console.error('AI Generation error:', err);
+        elements.aiStatusText.textContent = `Generation error: ${err.message || 'Please try again'}`;
         showToast('Error generating image. Please try again.');
       } finally {
         elements.generateAiBtn.disabled = false;
