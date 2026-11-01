@@ -148,6 +148,61 @@
             <p id="aiStatusText" class="ai-status-text">Free unlimited generation • No API key required</p>
           </div>
         </div>
+
+        <!-- 🧪 Live Test Area Under Uploads -->
+        <div class="test-area-box" id="testAreaBox">
+          <div class="test-area-header">
+            <span class="test-badge">🧪 Test Area</span>
+            <span class="test-subtitle">Avatar & Device Preview</span>
+          </div>
+
+          <!-- Avatar / Profile Picture Test Overlay -->
+          <div class="control-group">
+            <label for="avatarModeSelect">Avatar / Profile Picture Overlay</label>
+            <select id="avatarModeSelect" class="form-select">
+              <option value="both" selected>👤 Both Personal (Mobile Center & Desktop Left)</option>
+              <option value="desktop">💻 Desktop PC Layout Only (Left-aligned overlap)</option>
+              <option value="mobile">📱 Mobile Smartphone Only (Center-bottom overlap)</option>
+              <option value="none">🚫 Hide Profile Photo Overlays</option>
+            </select>
+          </div>
+
+          <!-- Upload Profile Pic to test live overlap -->
+          <div class="avatar-upload-group" id="avatarUploadGroup">
+            <div class="control-label-row">
+              <label>Preview Your Own Profile Photo</label>
+              <span class="text-muted text-xs">Optional</span>
+            </div>
+            <div class="avatar-upload-row">
+              <input type="file" id="avatarFileInput" accept="image/png, image/jpeg, image/webp" class="hidden">
+              <button type="button" id="uploadAvatarBtn" class="btn btn-secondary btn-sm">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="8" r="4"></circle>
+                  <path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>
+                  <line x1="19" y1="8" x2="19" y2="14"></line>
+                  <line x1="22" y1="11" x2="16" y2="11"></line>
+                </svg>
+                Upload Profile Pic
+              </button>
+              <div id="avatarThumbPreview" class="avatar-thumb-box hidden">
+                <img id="avatarThumbImg" alt="Profile Thumbnail" src="">
+                <button type="button" id="removeAvatarBtn" class="btn-remove-thumb" title="Remove custom avatar">✕</button>
+              </div>
+            </div>
+            <p class="control-hint">Shows how your real face or logo will overlap your cover.</p>
+          </div>
+
+          <!-- Instant Simulator Test Switcher -->
+          <div class="device-test-row">
+            <span class="device-test-label">Instant Device Test:</span>
+            <div class="device-test-buttons">
+              <button type="button" class="btn-device-test" data-test-tab="editor" title="Back to canvas editor">🎨 Editor</button>
+              <button type="button" class="btn-device-test" data-test-tab="desktop" title="PC Desktop simulation">💻 PC</button>
+              <button type="button" class="btn-device-test" data-test-tab="mobile" title="Mobile phone simulation">📱 Mobile</button>
+              <button type="button" class="btn-device-test" data-test-tab="dual" title="Side-by-side comparison">⚡ Dual</button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- 2. Canvas & Transform Controls -->
@@ -172,8 +227,23 @@
             <button type="button" id="fitSafeBtn" class="btn btn-sm btn-fit" title="Fit neatly inside PC & Mobile safe area">
               🎯 Fit Inside Safe Zone
             </button>
-            <button type="button" id="centerImageBtn" class="btn btn-sm" title="Re-center image">
-              ⊙ Re-Center
+          </div>
+        </div>
+
+        <!-- Position Alignment (Top, Center, Bottom) -->
+        <div class="control-group">
+          <label class="control-label-row">
+            <span>Vertical & Horizontal Alignment</span>
+          </label>
+          <div class="align-buttons-row">
+            <button type="button" id="alignTopBtn" class="btn btn-sm btn-align" title="Align photo to top edge">
+              ⬆ Top
+            </button>
+            <button type="button" id="centerImageBtn" class="btn btn-sm btn-align" title="Re-center image">
+              ⊙ Center
+            </button>
+            <button type="button" id="alignBottomBtn" class="btn btn-sm btn-align" title="Align photo to bottom edge">
+              ⬇ Bottom
             </button>
           </div>
         </div>
@@ -265,17 +335,6 @@
               <span class="switch-desc">Harmonious alignment lines</span>
             </div>
           </label>
-        </div>
-
-        <!-- Avatar silhouette -->
-        <div class="control-group">
-          <label for="avatarModeSelect">Avatar / Profile Picture Overlay</label>
-          <select id="avatarModeSelect" class="form-select">
-            <option value="both" selected>👤 Both Personal & Business Positions</option>
-            <option value="personal">👤 Personal Profile (Bottom Left + Mobile)</option>
-            <option value="page">🏢 Business / Fan Page Layout</option>
-            <option value="none">🚫 Hide Profile Photo Overlay</option>
-          </select>
         </div>
 
         <div class="control-group">

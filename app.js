@@ -44,9 +44,12 @@
       desktopCrop: true,
       mobileCrop: true,
       ruleOfThirds: false,
-      avatarMode: 'both', // 'both' | 'personal' | 'page' | 'none'
+      avatarMode: 'both', // 'both' | 'desktop' | 'mobile' | 'none'
       opacity: 0.65
     },
+    avatarImage: null,
+    avatarLoaded: false,
+    avatarDataUrl: null,
     export: {
       resolution: '2x',
       format: 'png',
@@ -94,6 +97,8 @@
     fitContainBtn: document.getElementById('fitContainBtn'),
     fitCoverBtn: document.getElementById('fitCoverBtn'),
     fitSafeBtn: document.getElementById('fitSafeBtn'),
+    alignTopBtn: document.getElementById('alignTopBtn'),
+    alignBottomBtn: document.getElementById('alignBottomBtn'),
     centerImageBtn: document.getElementById('centerImageBtn'),
     imageAspectBadge: document.getElementById('imageAspectBadge'),
     statImgDimensions: document.getElementById('statImgDimensions'),
@@ -113,12 +118,19 @@
     bgColorPicker: document.getElementById('bgColorPicker'),
     bgColorHex: document.getElementById('bgColorHex'),
 
-    // Guides
+    // Guides & Avatars
     showSafeZoneCheck: document.getElementById('showSafeZoneCheck'),
     showDesktopCropCheck: document.getElementById('showDesktopCropCheck'),
     showMobileCropCheck: document.getElementById('showMobileCropCheck'),
     showThirdsCheck: document.getElementById('showThirdsCheck'),
     avatarModeSelect: document.getElementById('avatarModeSelect'),
+    uploadAvatarBtn: document.getElementById('uploadAvatarBtn'),
+    avatarFileInput: document.getElementById('avatarFileInput'),
+    avatarThumbPreview: document.getElementById('avatarThumbPreview'),
+    avatarThumbImg: document.getElementById('avatarThumbImg'),
+    removeAvatarBtn: document.getElementById('removeAvatarBtn'),
+    desktopAvatar: document.getElementById('desktopAvatar'),
+    mobileAvatar: document.querySelector('.fb-mobile-avatar'),
     overlayOpacitySlider: document.getElementById('overlayOpacitySlider'),
     overlayOpacityVal: document.getElementById('overlayOpacityVal'),
 
@@ -639,49 +651,130 @@
       const mode = state.guides.avatarMode;
 
       // 1. Desktop Profile (Bottom-left circular overlap)
-      if (mode === 'both' || mode === 'personal' || mode === 'page') {
-        const desktopAvatarR = 120; // 240px diameter at 2x
-        const desktopAvatarX = SAFE_ZONE.x + 140;
-        const desktopAvatarY = CANVAS_HEIGHT - DESKTOP_CROP_TOP + 10;
+      if (mode === 'both' || mode === 'desktop') {
+        const desktopAvatarR = 135;
+        const desktopAvatarX = SAFE_ZONE.x + 140; // 320px
+        const desktopAvatarY = 590; // Overlaps bottom edge of desktop cover (624 visible, y=48..672)
 
-        guideCtx.save();
-        guideCtx.fillStyle = 'rgba(30, 41, 59, ' + (opacity * 0.85) + ')';
-        guideCtx.strokeStyle = 'rgba(59, 130, 246, ' + opacity + ')';
-        guideCtx.lineWidth = 3;
-        guideCtx.beginPath();
-        guideCtx.arc(desktopAvatarX, desktopAvatarY, desktopAvatarR, 0, Math.PI * 2);
-        guideCtx.fill();
-        guideCtx.stroke();
-
-        guideCtx.fillStyle = '#ffffff';
-        guideCtx.font = '600 14px Inter, sans-serif';
-        guideCtx.textAlign = 'center';
-        guideCtx.fillText('Desktop Avatar Overlap', desktopAvatarX, desktopAvatarY - 50);
-        guideCtx.restore();
+        drawAvatarGuide(
+          guideCtx,
+          desktopAvatarX,
+          desktopAvatarY,
+          desktopAvatarR,
+          '🖥️ Desktop Avatar Overlap',
+          '#38bdf8',
+          'Covers this area on PC & Mac'
+        );
       }
 
       // 2. Mobile Profile (Centered bottom circular overlap)
-      if (mode === 'both' || mode === 'personal') {
+      if (mode === 'both' || mode === 'mobile') {
         const mobileAvatarR = 110;
-        const mobileAvatarX = CANVAS_WIDTH / 2;
-        const mobileAvatarY = CANVAS_HEIGHT - 20;
+        const mobileAvatarX = CANVAS_WIDTH / 2; // 820px
+        const mobileAvatarY = 580; // Overlaps bottom center
 
-        guideCtx.save();
-        guideCtx.fillStyle = 'rgba(30, 41, 59, ' + (opacity * 0.85) + ')';
-        guideCtx.strokeStyle = 'rgba(236, 72, 153, ' + opacity + ')';
-        guideCtx.lineWidth = 3;
-        guideCtx.beginPath();
-        guideCtx.arc(mobileAvatarX, mobileAvatarY, mobileAvatarR, 0, Math.PI * 2);
-        guideCtx.fill();
-        guideCtx.stroke();
-
-        guideCtx.fillStyle = '#ffffff';
-        guideCtx.font = '600 14px Inter, sans-serif';
-        guideCtx.textAlign = 'center';
-        guideCtx.fillText('Mobile Avatar Overlap', mobileAvatarX, mobileAvatarY - 50);
-        guideCtx.restore();
+        drawAvatarGuide(
+          guideCtx,
+          mobileAvatarX,
+          mobileAvatarY,
+          mobileAvatarR,
+          '📱 Mobile Avatar Overlap',
+          '#ec4899',
+          'Covers this area on smartphones'
+        );
       }
     }
+  }
+
+  // Draw enhanced avatar guide with vector silhouette or uploaded image
+  function drawAvatarGuide(ctx, x, y, r, label, color, subtitle) {
+    ctx.save();
+
+    // Semi-transparent backdrop shadow
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 18;
+
+    // Outer circular boundary fill
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+    ctx.fill();
+
+    // Crisp high-contrast border
+    ctx.shadowBlur = 0;
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = color;
+    ctx.stroke();
+
+    // Inner dashed guide line
+    ctx.setLineDash([6, 6]);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x, y, r - 6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Custom avatar image OR silhouette icon
+    if (state.avatarLoaded && state.avatarImage) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(x, y, r - 3, 0, Math.PI * 2);
+      ctx.clip();
+      const img = state.avatarImage;
+      const minSide = Math.min(img.width, img.height);
+      const sx = (img.width - minSide) / 2;
+      const sy = (img.height - minSide) / 2;
+      ctx.drawImage(img, sx, sy, minSide, minSide, x - r, y - r, r * 2, r * 2);
+      ctx.restore();
+    } else {
+      // Silhouette icon
+      // Head
+      const headR = r * 0.32;
+      const headY = y - r * 0.16;
+      ctx.beginPath();
+      ctx.arc(x, headY, headR, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+
+      // Shoulders / chest
+      const bodyW = r * 0.62;
+      const bodyTop = y + r * 0.22;
+      const bodyBottom = y + r * 0.72;
+      ctx.beginPath();
+      ctx.moveTo(x - bodyW, bodyBottom);
+      ctx.quadraticCurveTo(x - bodyW * 0.7, bodyTop, x, bodyTop);
+      ctx.quadraticCurveTo(x + bodyW * 0.7, bodyTop, x + bodyW, bodyBottom);
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    // High-visibility badge pill above avatar
+    const badgeW = 270;
+    const badgeH = 46;
+    const badgeX = x - badgeW / 2;
+    const badgeY = y - r - badgeH - 12;
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(badgeX, badgeY, badgeW, badgeH, 8);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 16px Inter, system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(label, x, badgeY + 16);
+
+    ctx.fillStyle = '#cbd5e1';
+    ctx.font = '500 12px Inter, system-ui, sans-serif';
+    ctx.fillText(subtitle, x, badgeY + 33);
+
+    ctx.restore();
   }
 
   // Draw semi-transparent diagonal stripes on cutoff areas
@@ -759,6 +852,29 @@
     const dualMCtx = elements.dualMobileCanvas.getContext('2d');
     dualMCtx.clearRect(0, 0, MOBILE_VISIBLE_WIDTH, CANVAS_HEIGHT);
     dualMCtx.drawImage(elements.mobilePreviewCanvas, 0, 0);
+
+    // 5. Sync simulator avatar DOM elements
+    const mode = state.guides.avatarMode;
+    const hideDesktop = mode === 'none' || mode === 'mobile';
+    const hideMobile = mode === 'none' || mode === 'desktop';
+
+    if (elements.desktopAvatar) {
+      elements.desktopAvatar.style.display = hideDesktop ? 'none' : 'flex';
+      if (state.avatarLoaded && state.avatarDataUrl) {
+        elements.desktopAvatar.innerHTML = `<img src="${state.avatarDataUrl}" alt="Avatar">`;
+      } else {
+        elements.desktopAvatar.innerHTML = `<span class="avatar-letter">U</span>`;
+      }
+    }
+
+    if (elements.mobileAvatar) {
+      elements.mobileAvatar.style.display = hideMobile ? 'none' : 'flex';
+      if (state.avatarLoaded && state.avatarDataUrl) {
+        elements.mobileAvatar.innerHTML = `<img src="${state.avatarDataUrl}" alt="Avatar">`;
+      } else {
+        elements.mobileAvatar.innerHTML = `<span class="avatar-letter">U</span>`;
+      }
+    }
   }
 
   // --- Transform Helpers ---
@@ -1029,6 +1145,28 @@
       });
     }
 
+    if (elements.alignTopBtn) {
+      elements.alignTopBtn.addEventListener('click', () => {
+        const base = getBaseDimensions();
+        const drawH = base.h * state.zoom;
+        // Align top edge of image to top edge of canvas (or top of desktop crop)
+        state.y = drawH / 2;
+        renderAll();
+        showToast('Aligned photo to top');
+      });
+    }
+
+    if (elements.alignBottomBtn) {
+      elements.alignBottomBtn.addEventListener('click', () => {
+        const base = getBaseDimensions();
+        const drawH = base.h * state.zoom;
+        // Align bottom edge of image to bottom edge of canvas
+        state.y = CANVAS_HEIGHT - drawH / 2;
+        renderAll();
+        showToast('Aligned photo to bottom');
+      });
+    }
+
     elements.rotateLeftBtn.addEventListener('click', () => {
       state.rotation = (state.rotation - 90 + 360) % 360;
       renderAll();
@@ -1090,7 +1228,49 @@
     elements.avatarModeSelect.addEventListener('change', (e) => {
       state.guides.avatarMode = e.target.value;
       renderGuides();
+      syncPreviews();
     });
+
+    if (elements.uploadAvatarBtn && elements.avatarFileInput) {
+      elements.uploadAvatarBtn.addEventListener('click', () => {
+        elements.avatarFileInput.click();
+      });
+
+      elements.avatarFileInput.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const img = new Image();
+          img.onload = () => {
+            state.avatarImage = img;
+            state.avatarLoaded = true;
+            state.avatarDataUrl = ev.target.result;
+            if (elements.avatarThumbImg) elements.avatarThumbImg.src = ev.target.result;
+            if (elements.avatarThumbPreview) elements.avatarThumbPreview.classList.remove('hidden');
+            renderGuides();
+            syncPreviews();
+            showToast('Profile photo overlay updated!');
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (elements.removeAvatarBtn) {
+      elements.removeAvatarBtn.addEventListener('click', () => {
+        state.avatarImage = null;
+        state.avatarLoaded = false;
+        state.avatarDataUrl = null;
+        if (elements.avatarFileInput) elements.avatarFileInput.value = '';
+        if (elements.avatarThumbImg) elements.avatarThumbImg.src = '';
+        if (elements.avatarThumbPreview) elements.avatarThumbPreview.classList.add('hidden');
+        renderGuides();
+        syncPreviews();
+        showToast('Custom profile photo removed');
+      });
+    }
 
     elements.overlayOpacitySlider.addEventListener('input', (e) => {
       state.guides.opacity = parseInt(e.target.value, 10) / 100;
@@ -1127,6 +1307,14 @@
     elements.tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         const targetTab = tab.getAttribute('data-tab');
+        switchTab(targetTab);
+      });
+    });
+
+    // Device Test Quick Buttons under Uploads
+    document.querySelectorAll('.btn-device-test').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-test-tab');
         switchTab(targetTab);
       });
     });
@@ -1172,6 +1360,10 @@
 
     elements.tabPanels.forEach(p => {
       p.classList.toggle('active', p.id === `panel-${tabId}`);
+    });
+
+    document.querySelectorAll('.btn-device-test').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-test-tab') === tabId);
     });
 
     syncPreviews();
