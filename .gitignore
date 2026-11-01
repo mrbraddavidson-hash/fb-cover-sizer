@@ -2,3 +2,5 @@
 *.log
 bg_check.png
 crop_check.png
+
+test_*.*

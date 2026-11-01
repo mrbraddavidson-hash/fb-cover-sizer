@@ -1678,8 +1678,8 @@
       // UI Loading state
       elements.generateAiBtn.disabled = true;
       elements.aiLoadingSpinner.classList.remove('hidden');
-      elements.aiStatusText.textContent = 'Generating with Cloudflare Workers AI (FLUX.1 Schnell)...';
-      showToast('Generating AI image via Cloudflare Workers AI (~3-5s)...');
+      elements.aiStatusText.textContent = 'Generating native Facebook Cover (1640 × 720) with Cloudflare AI...';
+      showToast('Generating widescreen Facebook Cover (~3-5s)...');
 
       try {
         const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -1713,12 +1713,12 @@
           img.src = objectUrl;
         });
 
+        // setImage automatically detects Facebook Standard (1640x720 / 2.28:1) and sets 'cover' mode to fill the canvas edge-to-edge
         setImage(img);
-        setFitMode('safe');
         URL.revokeObjectURL(objectUrl);
 
-        elements.aiStatusText.textContent = '✨ 100% Watermark-Free Cover Generated with Cloudflare Workers AI!';
-        showToast('AI Cover generated — 100% watermark-free!');
+        elements.aiStatusText.textContent = '✨ Pixel-Perfect Facebook Cover (1640 × 720) Generated!';
+        showToast('Facebook Cover generated (1640 × 720) — 100% Watermark-Free!');
       } catch (err) {
         console.error('AI Generation error:', err);
         elements.aiStatusText.textContent = `Generation error: ${err.message || 'Please try again'}`;
