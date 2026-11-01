@@ -32,7 +32,8 @@
     imageLoaded: false,
     x: CANVAS_WIDTH / 2,
     y: CANVAS_HEIGHT / 2,
-    scale: 1.0,
+    fitMode: 'contain', // 'contain' | 'cover' | 'safe'
+    zoom: 1.0, // 0.3 to 3.0 (1.0 = 100% of chosen fit mode)
     rotation: 0, // in degrees: 0, 90, 180, 270
     flipH: 1, // 1 or -1
     flipV: 1, // 1 or -1
@@ -89,15 +90,18 @@
     fileInput: document.getElementById('fileInput'),
     sampleButtons: document.querySelectorAll('.sample-picker [data-sample]'),
 
-    // Transforms
+    // Transforms & Sizing
+    fitContainBtn: document.getElementById('fitContainBtn'),
+    fitCoverBtn: document.getElementById('fitCoverBtn'),
+    fitSafeBtn: document.getElementById('fitSafeBtn'),
+    centerImageBtn: document.getElementById('centerImageBtn'),
+    imageAspectBadge: document.getElementById('imageAspectBadge'),
+    statImgDimensions: document.getElementById('statImgDimensions'),
+    statFitMode: document.getElementById('statFitMode'),
     zoomSlider: document.getElementById('zoomSlider'),
     zoomVal: document.getElementById('zoomVal'),
     zoomInBtn: document.getElementById('zoomInBtn'),
     zoomOutBtn: document.getElementById('zoomOutBtn'),
-    fitCoverBtn: document.getElementById('fitCoverBtn'),
-    fitSafeBtn: document.getElementById('fitSafeBtn'),
-    centerImageBtn: document.getElementById('centerImageBtn'),
-    resetTransformBtn: document.getElementById('resetTransformBtn'),
     rotateLeftBtn: document.getElementById('rotateLeftBtn'),
     rotateRightBtn: document.getElementById('rotateRightBtn'),
     flipHBtn: document.getElementById('flipHBtn'),
@@ -320,12 +324,87 @@
     img.src = offscreen.toDataURL('image/png');
   }
 
+  function getBaseDimensions() {
+    if (!state.image) return { w: CANVAS_WIDTH, h: CANVAS_HEIGHT };
+    const imgW = state.image.width;
+    const imgH = state.image.height;
+
+    if (state.fitMode === 'contain') {
+      // Scales so 100% of the photo fits inside the 1640x720 canvas without any edges cut off
+      const scale = Math.min(CANVAS_WIDTH / imgW, CANVAS_HEIGHT / imgH);
+      return { w: imgW * scale, h: imgH * scale };
+    } else if (state.fitMode === 'safe') {
+      // Scales so 100% of the photo fits inside the 1280x624 Universal Safe Zone
+      const scale = Math.min(SAFE_ZONE.width / imgW, SAFE_ZONE.height / imgH);
+      return { w: imgW * scale, h: imgH * scale };
+    } else {
+      // 'cover': fills the 1640x720 canvas completely
+      const scale = Math.max(CANVAS_WIDTH / imgW, CANVAS_HEIGHT / imgH);
+      return { w: imgW * scale, h: imgH * scale };
+    }
+  }
+
   function setImage(img) {
     state.image = img;
     state.imageLoaded = true;
-    fitToCover();
+
+    // Detect aspect ratio
+    const aspect = img.width / img.height;
+    let aspectName = '';
+    if (Math.abs(aspect - (16 / 9)) < 0.05) aspectName = '16:9';
+    else if (Math.abs(aspect - (4 / 3)) < 0.05) aspectName = '4:3';
+    else if (Math.abs(aspect - 1.0) < 0.05) aspectName = '1:1 Square';
+    else if (Math.abs(aspect - (205 / 78)) < 0.08) aspectName = 'FB Desktop 2.63:1';
+    else if (Math.abs(aspect - (1640 / 720)) < 0.08) aspectName = 'FB Standard 2.28:1';
+    else aspectName = `${aspect.toFixed(2)}:1`;
+
+    if (elements.imageAspectBadge) {
+      elements.imageAspectBadge.textContent = aspectName;
+    }
+    if (elements.statImgDimensions) {
+      elements.statImgDimensions.textContent = `${img.width} × ${img.height} px (${aspectName})`;
+    }
+
+    // Smart default: If the image is already a wide banner (~2.28:1), default to cover.
+    // If it's a standard camera photo (4:3, 1:1, or 16:9), default to 'contain' so nothing is cut off!
+    if (Math.abs(aspect - (1640 / 720)) < 0.1) {
+      setFitMode('cover', false);
+    } else {
+      setFitMode('contain', false);
+    }
+
+    state.zoom = 1.0;
+    state.x = CANVAS_WIDTH / 2;
+    state.y = CANVAS_HEIGHT / 2;
+    updateZoomSlider();
     renderAll();
     syncPreviews();
+  }
+
+  function setFitMode(mode, triggerRender = true) {
+    state.fitMode = mode;
+    state.zoom = 1.0;
+    state.x = CANVAS_WIDTH / 2;
+    state.y = CANVAS_HEIGHT / 2;
+
+    // Update active button state
+    if (elements.fitContainBtn) elements.fitContainBtn.classList.toggle('active', mode === 'contain');
+    if (elements.fitCoverBtn) elements.fitCoverBtn.classList.toggle('active', mode === 'cover');
+    if (elements.fitSafeBtn) elements.fitSafeBtn.classList.toggle('active', mode === 'safe');
+
+    if (elements.statFitMode) {
+      const modeNames = {
+        contain: 'Fit Whole Photo (No Cutoff)',
+        cover: 'Fill Full Canvas',
+        safe: 'Fit Inside Safe Zone'
+      };
+      elements.statFitMode.textContent = modeNames[mode] || mode;
+    }
+
+    updateZoomSlider();
+    if (triggerRender) {
+      renderAll();
+    }
   }
 
   // --- Rendering Pipeline ---
@@ -366,7 +445,7 @@
       bgCtx.save();
       bgCtx.filter = 'blur(40px) brightness(0.7)';
       // Draw oversized image to prevent blurred border bleed
-      const scale = Math.max(CANVAS_WIDTH / state.image.width, CANVAS_HEIGHT / state.image.height) * 1.2;
+      const scale = Math.max(CANVAS_WIDTH / state.image.width, CANVAS_HEIGHT / state.image.height) * 1.25;
       const w = state.image.width * scale;
       const h = state.image.height * scale;
       const x = (CANVAS_WIDTH - w) / 2;
@@ -380,7 +459,7 @@
         CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, CANVAS_WIDTH / 1.8
       );
       vignette.addColorStop(0, 'rgba(0,0,0,0)');
-      vignette.addColorStop(1, 'rgba(0,0,0,0.5)');
+      vignette.addColorStop(1, 'rgba(0,0,0,0.4)');
       bgCtx.fillStyle = vignette;
       bgCtx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
@@ -405,11 +484,10 @@
     // Translate to center position
     mainCtx.translate(state.x, state.y);
     mainCtx.rotate((state.rotation * Math.PI) / 180);
-    mainCtx.scale(state.scale * state.flipH, state.scale * state.flipV);
+    mainCtx.scale(state.zoom * state.flipH, state.zoom * state.flipV);
 
-    const w = state.image.width;
-    const h = state.image.height;
-    mainCtx.drawImage(state.image, -w / 2, -h / 2, w, h);
+    const base = getBaseDimensions();
+    mainCtx.drawImage(state.image, -base.w / 2, -base.h / 2, base.w, base.h);
 
     mainCtx.restore();
   }
@@ -684,44 +762,9 @@
   }
 
   // --- Transform Helpers ---
-  function fitToCover() {
-    if (!state.image) return;
-    const scaleX = CANVAS_WIDTH / state.image.width;
-    const scaleY = CANVAS_HEIGHT / state.image.height;
-    state.scale = Math.max(scaleX, scaleY);
-    state.x = CANVAS_WIDTH / 2;
-    state.y = CANVAS_HEIGHT / 2;
-    updateZoomSlider();
-  }
-
-  function fitToSafeZone() {
-    if (!state.image) return;
-    const scaleX = SAFE_ZONE.width / state.image.width;
-    const scaleY = SAFE_ZONE.height / state.image.height;
-    state.scale = Math.min(scaleX, scaleY);
-    state.x = CANVAS_WIDTH / 2;
-    state.y = CANVAS_HEIGHT / 2;
-    updateZoomSlider();
-  }
-
-  function centerImage() {
-    state.x = CANVAS_WIDTH / 2;
-    state.y = CANVAS_HEIGHT / 2;
-    renderAll();
-  }
-
-  function resetTransforms() {
-    state.rotation = 0;
-    state.flipH = 1;
-    state.flipV = 1;
-    fitToCover();
-    renderAll();
-    showToast('Transforms reset to cover');
-  }
-
   function updateZoomSlider() {
-    const pct = Math.round(state.scale * 100);
-    elements.zoomSlider.value = Math.min(400, Math.max(20, pct));
+    const pct = Math.round(state.zoom * 100);
+    elements.zoomSlider.value = Math.min(300, Math.max(30, pct));
     elements.zoomVal.textContent = pct + '%';
   }
 
@@ -779,13 +822,13 @@
       const cursorX = (e.clientX - rect.left) * (CANVAS_WIDTH / rect.width);
       const cursorY = (e.clientY - rect.top) * (CANVAS_HEIGHT / rect.height);
 
-      const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-      const newScale = Math.min(4.0, Math.max(0.2, state.scale * zoomFactor));
+      const zoomFactor = e.deltaY < 0 ? 1.06 : 0.94;
+      const newZoom = Math.min(3.0, Math.max(0.3, +(state.zoom * zoomFactor).toFixed(3)));
 
       // Zoom towards cursor
-      state.x = cursorX - (cursorX - state.x) * (newScale / state.scale);
-      state.y = cursorY - (cursorY - state.y) * (newScale / state.scale);
-      state.scale = newScale;
+      state.x = cursorX - (cursorX - state.x) * (newZoom / state.zoom);
+      state.y = cursorY - (cursorY - state.y) * (newZoom / state.zoom);
+      state.zoom = newZoom;
 
       updateZoomSlider();
       renderAll();
@@ -938,38 +981,53 @@
 
     // Zoom Controls
     elements.zoomSlider.addEventListener('input', (e) => {
-      state.scale = parseInt(e.target.value, 10) / 100;
+      state.zoom = parseInt(e.target.value, 10) / 100;
       elements.zoomVal.textContent = e.target.value + '%';
       renderAll();
     });
 
     elements.zoomInBtn.addEventListener('click', () => {
-      state.scale = Math.min(4.0, state.scale + 0.1);
+      state.zoom = Math.min(3.0, +(state.zoom + 0.1).toFixed(2));
       updateZoomSlider();
       renderAll();
     });
 
     elements.zoomOutBtn.addEventListener('click', () => {
-      state.scale = Math.max(0.2, state.scale - 0.1);
+      state.zoom = Math.max(0.3, +(state.zoom - 0.1).toFixed(2));
       updateZoomSlider();
       renderAll();
     });
 
-    // Transforms
-    elements.fitCoverBtn.addEventListener('click', () => {
-      fitToCover();
-      renderAll();
-      showToast('Fitted to full canvas');
-    });
+    // Fit Mode buttons
+    if (elements.fitContainBtn) {
+      elements.fitContainBtn.addEventListener('click', () => {
+        setFitMode('contain');
+        showToast('Fitted whole photo (no edges cut off)');
+      });
+    }
 
-    elements.fitSafeBtn.addEventListener('click', () => {
-      fitToSafeZone();
-      renderAll();
-      showToast('Fitted within Universal Safe Zone');
-    });
+    if (elements.fitCoverBtn) {
+      elements.fitCoverBtn.addEventListener('click', () => {
+        setFitMode('cover');
+        showToast('Expanded to fill entire canvas');
+      });
+    }
 
-    elements.centerImageBtn.addEventListener('click', centerImage);
-    elements.resetTransformBtn.addEventListener('click', resetTransforms);
+    if (elements.fitSafeBtn) {
+      elements.fitSafeBtn.addEventListener('click', () => {
+        setFitMode('safe');
+        showToast('Fitted inside Universal Safe Zone');
+      });
+    }
+
+    if (elements.centerImageBtn) {
+      elements.centerImageBtn.addEventListener('click', () => {
+        state.x = CANVAS_WIDTH / 2;
+        state.y = CANVAS_HEIGHT / 2;
+        renderAll();
+        showToast('Image re-centered');
+      });
+    }
 
     elements.rotateLeftBtn.addEventListener('click', () => {
       state.rotation = (state.rotation - 90 + 360) % 360;

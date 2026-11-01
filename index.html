@@ -153,40 +153,57 @@
       <!-- 2. Canvas & Transform Controls -->
       <section class="panel-section">
         <h2 class="section-title">
-          <span class="step-num">2</span> Transform & Position
+          <span class="step-num">2</span> Sizing & Alignment
         </h2>
 
-        <!-- Zoom -->
+        <!-- Fit Modes (Contain, Cover, Safe Zone) -->
+        <div class="fit-mode-selector">
+          <label class="control-label-row">
+            <span>Sizing Presets</span>
+            <span id="imageAspectBadge" class="value-badge">Auto Fit</span>
+          </label>
+          <div class="fit-buttons-grid">
+            <button type="button" id="fitContainBtn" class="btn btn-sm btn-fit active" title="Show entire photo without any edges cut off">
+              🖼️ Fit Whole Photo (No Cutoff)
+            </button>
+            <button type="button" id="fitCoverBtn" class="btn btn-sm btn-fit" title="Expand to fill entire 1640×720 canvas">
+              📐 Fill Full Canvas
+            </button>
+            <button type="button" id="fitSafeBtn" class="btn btn-sm btn-fit" title="Fit neatly inside PC & Mobile safe area">
+              🎯 Fit Inside Safe Zone
+            </button>
+            <button type="button" id="centerImageBtn" class="btn btn-sm" title="Re-center image">
+              ⊙ Re-Center
+            </button>
+          </div>
+        </div>
+
+        <!-- Zoom Slider -->
         <div class="control-group">
           <div class="control-label-row">
-            <label for="zoomSlider">Zoom</label>
+            <label for="zoomSlider">Zoom Scale</label>
             <span id="zoomVal" class="value-badge">100%</span>
           </div>
           <div class="slider-with-buttons">
-            <button id="zoomOutBtn" class="btn-mini" title="Zoom out" aria-label="Zoom out">−</button>
-            <input type="range" id="zoomSlider" min="20" max="400" value="100" step="1">
-            <button id="zoomInBtn" class="btn-mini" title="Zoom in" aria-label="Zoom in">+</button>
+            <button type="button" id="zoomOutBtn" class="btn-mini" title="Zoom out" aria-label="Zoom out">−</button>
+            <input type="range" id="zoomSlider" min="30" max="300" value="100" step="1">
+            <button type="button" id="zoomInBtn" class="btn-mini" title="Zoom in" aria-label="Zoom in">+</button>
           </div>
         </div>
 
-        <!-- Quick Alignments -->
-        <div class="quick-transforms">
-          <button id="fitCoverBtn" class="btn btn-sm" title="Cover full canvas">Fill Cover</button>
-          <button id="fitSafeBtn" class="btn btn-sm" title="Fit within both PC & Mobile safe area">Fit Safe Area</button>
-          <button id="centerImageBtn" class="btn btn-sm" title="Center image">Center</button>
-          <button id="resetTransformBtn" class="btn btn-sm btn-ghost" title="Reset all changes">Reset</button>
-        </div>
-
+        <!-- Secondary Transformations -->
         <div class="quick-transforms secondary">
-          <button id="rotateLeftBtn" class="btn btn-sm" title="Rotate left 90°">⤺ 90°</button>
-          <button id="rotateRightBtn" class="btn btn-sm" title="Rotate right 90°">⤻ 90°</button>
-          <button id="flipHBtn" class="btn btn-sm" title="Flip horizontally">Flip ⇄</button>
-          <button id="flipVBtn" class="btn btn-sm" title="Flip vertically">Flip ⇅</button>
+          <button type="button" id="rotateLeftBtn" class="btn btn-sm" title="Rotate left 90°">⤺ 90°</button>
+          <button type="button" id="rotateRightBtn" class="btn btn-sm" title="Rotate right 90°">⤻ 90°</button>
+          <button type="button" id="flipHBtn" class="btn btn-sm" title="Flip horizontally">Flip ⇄</button>
+          <button type="button" id="flipVBtn" class="btn btn-sm" title="Flip vertically">Flip ⇅</button>
         </div>
 
         <!-- Background Fill if photo doesn't fill canvas -->
         <div class="control-group">
-          <label for="bgTypeSelect">Background for Letterbox</label>
+          <div class="control-label-row">
+            <label for="bgTypeSelect">Background Fill (For Margins)</label>
+          </div>
           <select id="bgTypeSelect" class="form-select">
             <option value="blur" selected>✨ Blurred Image (Smart Fill)</option>
             <option value="color">🎨 Solid Color</option>
@@ -401,16 +418,16 @@
           <!-- Bottom quick stats -->
           <div class="canvas-footer-stats">
             <div class="stat-item">
-              <span class="stat-label">Canvas Size:</span>
+              <span class="stat-label">Canvas:</span>
               <span class="stat-value">1640 × 720 px (2.28:1)</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Desktop Viewable:</span>
-              <span class="stat-value">1640 × 624 px (Cuts top/bottom 48px)</span>
+              <span class="stat-label">Original Image:</span>
+              <span id="statImgDimensions" class="stat-value">Loading...</span>
             </div>
             <div class="stat-item">
-              <span class="stat-label">Mobile Viewable:</span>
-              <span class="stat-value">1280 × 720 px (Cuts sides 180px)</span>
+              <span class="stat-label">Current Fit:</span>
+              <span id="statFitMode" class="stat-value" style="color: #38bdf8;">Fit Whole Photo</span>
             </div>
             <div class="stat-item safe-stat">
               <span class="stat-label">Universal Safe Zone:</span>

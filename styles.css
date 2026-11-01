@@ -656,6 +656,50 @@ input[type="range"] {
   cursor: pointer;
 }
 
+/* Fit Mode Presets */
+.fit-mode-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fit-buttons-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.btn-fit {
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
+}
+
+.btn-fit:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-blue);
+}
+
+.btn-fit.active {
+  background-color: var(--accent-blue-light);
+  border-color: var(--accent-blue);
+  color: #38bdf8;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Quick transforms */
 .quick-transforms {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -920,7 +964,8 @@ input[type="color"] {
   box-shadow: 0 12px 36px -4px rgba(0, 0, 0, 0.6);
   border-radius: var(--radius-md);
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  outline: 1px solid var(--border-color);
+  border: none;
   background-color: #000000;
   touch-action: none;
   cursor: grab;
