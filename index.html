@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Facebook Cover Photo Sizer — Desktop & Mobile Perfect</title>
   <link rel="icon" type="image/png" href="app-icon.png">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261103">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -267,6 +267,36 @@
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <!-- Zoom & Scale Toolbar Directly Under Facebook Demo -->
+          <div class="demo-zoom-control-bar">
+            <div class="zoom-bar-left">
+              <span class="zoom-bar-title">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"></circle>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                  <line x1="11" y1="8" x2="11" y2="14"></line>
+                  <line x1="8" y1="11" x2="14" y2="11"></line>
+                </svg>
+                Zoom Scale:
+              </span>
+              <div class="slider-with-buttons zoom-bar-slider-wrap">
+                <button type="button" class="btn-mini btn-zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+                <input type="range" class="zoom-range-input" min="30" max="300" value="100" step="1">
+                <button type="button" class="btn-mini btn-zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+              </div>
+              <span class="value-badge zoom-val-badge">100%</span>
+            </div>
+            <div class="zoom-bar-right">
+              <button type="button" class="btn btn-secondary btn-sm btn-reset-view" title="Reset Zoom and Center Position">
+                <svg class="icon-sm" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                  <path d="M3 3v5h5"></path>
+                </svg>
+                Reset Zoom & Center
+              </button>
             </div>
           </div>
 
@@ -862,6 +892,6 @@
   <!-- Notification Toast -->
   <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
-  <script src="app.js"></script>
+  <script src="app.js?v=20261103"></script>
 </body>
 </html>
